@@ -1,0 +1,443 @@
+---
+title: "Untitled"
+author: "Miguel Rodo"
+date: "13/09/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r }
+library(magrittr)
+library(stringr)
+```
+
+```{r }
+dir_data_raw <- file.path(
+  dirname(here::here()), 
+  "DataRawGelaDURT"
+)
+long_to_short_pop <- c(
+  "MAIT cells" = "mait", 
+  "NKT cells" = "nkt", 
+  "CD1b-GMM" = "cd1b", 
+  "CD1b-GMM T cells" = "cd1b", 
+  "GEM T cells" = "gem", 
+  "gd T cells" = "gd", 
+  "CD4 Tcells" = "cd4", 
+  "CD4 T cells" = "cd4", 
+  "CD4+ T cells" = "cd4", 
+  "IFNg+ CD4 T cells" = "cd4_ifng"
+)
+```
+
+## Lineage frequencies (Figure 2)
+
+```{r }
+sheet_vec <- c(
+  "MAIT cells", 
+  "NKT cells", 
+  "CD1b-GMM", 
+  "GEM T cells", 
+  "gd T cells", 
+  "CD4 Tcells", 
+  "IFNg+ CD4 T cells"
+)
+
+dir_data_raw <- file.path(
+  dirname(here::here()), 
+  "DataRawGelaDURT"
+)
+path_data_raw <- file.path(
+  dir_data_raw, 
+  "Fig. 2 Frequencies.xlsx"
+)
+
+data_tidy_freq <- purrr::map_df(sheet_vec, function(sheet) {
+  data_raw <- readxl::read_xlsx(
+    file.path(
+      path_data_raw 
+    ), 
+    sheet = sheet
+  ) %>%
+    dplyr::mutate(
+      pop = sheet
+    ) 
+  data_raw_infant_bcg_no <- data_raw %>%
+    dplyr::select(pop, `No BCG`) %>%
+    dplyr::mutate(bcg = "no bcg") %>%
+    dplyr::rename(freq = `No BCG`) %>%
+    dplyr::mutate(age = "infant") %>%
+    dplyr::mutate(row = seq_len(dplyr::n())) %>%
+    dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0("0", row),
+      row)) %>%
+    dplyr::mutate(pid = paste0(age, "_", row)) %>%
+    dplyr::select(pid, bcg, age, pop, freq) %>%
+    dplyr::filter(!is.na(freq))
+  
+  data_raw_infant_bcg <- data_raw %>%
+    dplyr::select(pop, `BCG`) %>%
+    dplyr::mutate(bcg = "bcg") %>%
+    dplyr::rename(freq = `BCG`) %>%
+    dplyr::mutate(age = "infant") %>%
+    dplyr::mutate(row = seq_len(dplyr::n()) +
+                    max(25, nrow(data_raw_infant_bcg_no))) %>%
+    dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0("0", row),
+      row)) %>%
+    dplyr::mutate(pid = paste0(age, "_", row)) %>%
+    dplyr::select(pid, bcg, age, pop, freq) %>%
+    dplyr::filter(!is.na(freq))
+  
+  data_raw_adult <- data_raw %>%
+    dplyr::select(pop, Before, After) %>%
+    dplyr::mutate(row = seq_len(dplyr::n())) %>%
+    dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0("0", row),
+      row)) %>%
+    dplyr::mutate(age = "adult") %>%
+    dplyr::mutate(pid = paste0(age, "_", row)) %>%
+    dplyr::select(-row) %>%
+    tidyr::pivot_longer(
+      -c(pop, pid, age), 
+      names_to = "bcg", 
+      values_to = "freq"
+    ) %>%
+    dplyr::mutate(bcg = tolower(bcg)) %>%
+    dplyr::select(pid, bcg, age, pop, freq) %>%
+    dplyr::filter(!is.na(freq))
+  
+  data_raw_infant_bcg_no %>%
+    dplyr::bind_rows(
+      data_raw_infant_bcg
+    ) %>%
+    dplyr::bind_rows(
+      data_raw_adult
+    ) %>%
+    dplyr::mutate(
+      bcg = tolower(bcg), 
+      pop = long_to_short_pop[pop]
+    ) %>%
+    dplyr::select(-age)
+}) %>%
+  tibble::as_tibble()
+```
+
+```{r }
+datautils::view_cols(
+  data_tidy_freq
+)
+```
+
+```{r }
+usethis::use_data(data_tidy_freq, 
+                  overwrite = TRUE)
+```
+
+## HLADR MFI: Infants (Figure 3)
+
+```{r }
+sheet_vec <- c(
+  "CD4+ T cells",
+  "MAIT cells", 
+  "NKT cells", 
+  "CD1b-GMM T cells", 
+  "gd T cells"
+)
+
+path_data_raw <- file.path(
+  dir_data_raw, 
+  "Fig. 3 Activation profile_infants.xlsx"
+)
+data_tidy_hladr_infant <- purrr::map_df(sheet_vec, function(sheet) {
+  data_raw <- readxl::read_xlsx(
+    file.path(
+      path_data_raw 
+    ), 
+    sheet = sheet
+  ) %>%
+    dplyr::mutate(
+      pop = sheet
+    )
+  if(nrow(data_raw) == 0) print(sheet)
+  
+  data_raw <- data_raw[,c("pop", "No BCG", "BCG")]
+
+  data_raw_infant_bcg_no <- data_raw %>%
+    dplyr::select(pop, `No BCG`) %>%
+    dplyr::mutate(bcg = "no bcg") %>%
+    dplyr::rename(hladr_mfi = `No BCG`) %>%
+    dplyr::mutate(age = "infant") %>%
+    dplyr::mutate(row = seq_len(dplyr::n())) %>%
+    dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0("0", row),
+      row)) %>%
+    dplyr::mutate(pid = paste0(age, "_", row)) %>%
+    dplyr::select(pid, bcg, age, pop, hladr_mfi) %>%
+    dplyr::filter(!is.na(hladr_mfi))
+  
+  data_raw_infant_bcg <- data_raw %>%
+    dplyr::select(pop, `BCG`) %>%
+    dplyr::mutate(bcg = "bcg") %>%
+    dplyr::rename(hladr_mfi = `BCG`) %>%
+    dplyr::mutate(age = "infant") %>%
+    dplyr::mutate(row = seq_len(dplyr::n()) + 25) %>%
+    dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0("0", row),
+      row)) %>%
+    dplyr::mutate(pid = paste0(age, "_", row)) %>%
+    dplyr::select(pid, bcg, age, pop, hladr_mfi) %>%
+    dplyr::filter(!is.na(hladr_mfi))
+  
+  data_raw_infant_bcg_no %>%
+    dplyr::bind_rows(
+      data_raw_infant_bcg
+    ) %>%
+    dplyr::mutate(
+      bcg = tolower(bcg), 
+      pop = long_to_short_pop[pop]
+    ) %>%
+    dplyr::select(-age)
+}) %>%
+  tibble::as_tibble()
+```
+
+
+```{r }
+datautils::view_cols(
+  data_tidy_hladr_infant
+)
+```
+
+```{r }
+usethis::use_data(data_tidy_hladr_infant, 
+                  overwrite = TRUE)
+```
+
+## HLADR MFI: Adults (Figure 4)
+
+```{r }
+sheet_vec <- c(
+  "MAIT cells", 
+  "NKT cells", 
+  "CD1b-GMM", 
+  "gd T cells", 
+  "CD4 T cells"
+)
+
+path_data_raw <- file.path(
+  dir_data_raw, 
+  "Fig.4 Activation profile adults.xlsx"
+)
+data_tidy_hladr_adult <- purrr::map_df(sheet_vec, function(sheet) {
+  data_raw <- readxl::read_xlsx(
+    file.path(
+      path_data_raw 
+    ), 
+    sheet = sheet
+  ) %>%
+    dplyr::mutate(
+      pop = sheet,
+      age = "adult",
+      row = 1:(dplyr::n())
+    )  %>%
+    dplyr::mutate(
+      pid = paste0(
+        age,
+        "_",
+        ifelse(str_length(row) == 1, 
+               paste0("0", row), row))
+    ) 
+  data_raw %>%
+    tidyr::pivot_longer(
+      -c(pid, pop, row, age), 
+      names_to = "days", 
+      values_to = "hladr_mfi"
+    ) %>%
+    dplyr::select(
+      pid, age, pop, days, hladr_mfi
+    ) %>%
+    dplyr::mutate(
+      pop = long_to_short_pop[pop]
+    ) %>%
+    dplyr::mutate(
+      days = as.integer(days)
+    ) %>%
+    dplyr::select(-age)
+}) %>%
+  tibble::as_tibble()
+```
+
+
+```{r }
+datautils::view_cols(
+  data_tidy_hladr_adult
+)
+```
+
+```{r }
+usethis::use_data(data_tidy_hladr_adult, 
+                  overwrite = TRUE)
+```
+
+## Clinical data - Infants
+
+```{r }
+path_data_raw <- file.path(
+  dir_data_raw, 
+  "Copy of delayed BCG samples for Anele_.xlsx"
+)
+data_tidy_clin_infant_bcg <- readxl::read_xlsx(
+  path_data_raw, 
+  skip = 4, 
+  n_max = 25
+  ) %>%
+  dplyr::mutate(bcg = "no bcg") %>%
+  dplyr::mutate(age = "infant") %>%
+    dplyr::mutate(row = seq_len(dplyr::n())) %>%
+    dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0("0", row),
+      row)) %>%
+  dplyr::mutate(pid_r = paste0(age, "_", row)) %>%
+  dplyr::select(-c(row, age))
+
+data_tidy_clin_infant_bcg_no <- readxl::read_xlsx(
+  path_data_raw, 
+  skip = 32, 
+  n_max = 25, 
+  col_names = FALSE
+  ) %>%
+  dplyr::mutate(bcg = "bcg") %>%
+  dplyr::mutate(age = "infant") %>%
+  dplyr::mutate(row = seq_len(dplyr::n()) + 25) %>%
+  dplyr::mutate(row = ifelse(
+    str_length(row) == 1, 
+    paste0("0", row),
+    row)) %>%
+  dplyr::mutate(pid_r = paste0(age, "_", row)) %>%
+  dplyr::select(-c(row, age))
+colnames(data_tidy_clin_infant_bcg_no) <- colnames(data_tidy_clin_infant_bcg)
+
+data_tidy_clin_infant <- data_tidy_clin_infant_bcg %>%
+  dplyr::bind_rows(data_tidy_clin_infant_bcg_no)
+
+data_tidy_clin_infant <- data_tidy_clin_infant %>%
+  dplyr::select(pid_r, PID, BabyEthnicGroup, GestationalAgeWeeks, BirthWeight:BirthHeadCirc, bcg) %>%
+  dplyr::rename(pid_sheet = PID, 
+                ethnicity = BabyEthnicGroup, 
+                gest_age = GestationalAgeWeeks, 
+                weight = BirthWeight, 
+                length = BirthLength, 
+                head_circ = BirthHeadCirc)
+data_tidy_clin_infant <- data_tidy_clin_infant %>%
+  dplyr::mutate(
+    pid_sheet = as.character(pid_sheet)
+  ) %>%
+  dplyr::mutate(
+    age = "infant"
+  ) %>%
+  dplyr::rename(pid = pid_r) %>%
+  dplyr::select(-bcg) %>%
+  dplyr::select(-pid_sheet)
+```
+
+```{r }
+datautils::view_cols(
+  data_tidy_clin_infant
+)
+```
+
+```{r }
+usethis::use_data(data_tidy_clin_infant, 
+                  overwrite = TRUE)
+```
+
+Ignore mode of delivery and Apgar[5/10]Mins as the values are all the same, or almost so.  
+
+## Clinical data - Adults
+
+```{r }
+path_data_raw <- file.path(
+  dir_data_raw, 
+  "TBRU samples for Anele .xlsx"
+)
+data_label_clin_adult <- readxl::read_xlsx(
+  path_data_raw, 
+  skip = 1, 
+  n_max = 25,
+  sheet = "TBRU samples"
+  ) %>%
+  dplyr::mutate(age = "adult") %>%
+  dplyr::mutate(row = seq_len(dplyr::n())) %>%
+  dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0("0", row),
+      row)) %>%
+  dplyr::mutate(pid = paste0(age, "_", row)) %>%
+  dplyr::select(-c(row, age)) %>%
+  dplyr::select(pid, `Sample ID`)
+sheet_to_r_pid_adult <- setNames(
+  data_label_clin_adult$pid, 
+  data_label_clin_adult$`Sample ID`
+)
+data_label_clin_adult <- readxl::read_xlsx(
+  path_data_raw, 
+  skip = 1, 
+  n_max = 25,
+  sheet = "TBRU samples"
+  )
+data_tidy_clin_adult <- readxl::read_xlsx(
+  path_data_raw, 
+  skip = 1, 
+  n_max = 25,
+  sheet = "Acquired TBRU samples"
+  ) %>%
+  dplyr::rename(age_in_years = age) %>%
+  dplyr::mutate(age = "adult") %>%
+  dplyr::mutate(row = seq_len(dplyr::n())) %>%
+  dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0("0", row),
+      row)) %>%
+  dplyr::mutate(pid = paste0(age, "_", row)) %>%
+  dplyr::select(-c(row)) %>%
+  dplyr::select(pid, age, age_in_years, sex, race, hgbval, bcgscar, height, weight, PPDmm) %>%
+  dplyr::rename(ppd = PPDmm)
+data_tidy_clin_adult <- data_tidy_clin_adult %>%
+  dplyr::mutate(race = ifelse(race == 2, 3, race)) %>%
+  dplyr::mutate(sex = as.character(sex), 
+                race = as.character(race), 
+                bcgscar = as.character(bcgscar))
+
+num_to_chr_sex_adult <- c("1" = "male", "2" = "female")
+num_to_chr_race_adult <- c("3" = "non_african", "1" = "african")
+data_tidy_clin_adult <- data_tidy_clin_adult %>%
+  dplyr::mutate(race = ifelse(race == 2, 3, race)) %>%
+  dplyr::mutate(sex = num_to_chr_sex_adult[sex],
+                race = num_to_chr_race_adult[race])
+
+data_tidy_clin_adult <- data_tidy_clin_adult %>%
+  dplyr::select(-bcgscar)
+```
+
+```{r }
+datautils::view_cols(
+  data_tidy_clin_adult
+)
+```
+
+```{r }
+usethis::use_data(data_tidy_clin_adult, 
+                  overwrite = TRUE)
+```
+
+
