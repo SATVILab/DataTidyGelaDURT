@@ -174,7 +174,8 @@ pre code {
 <pre class="r"><code>library(magrittr)
 library(stringr)</code></pre>
 <pre><code>## Warning: package &#39;stringr&#39; was built under R version 4.1.0</code></pre>
-<pre class="r"><code>dir_data_raw &lt;- file.path(
+<pre class="r"><code>unlink(here::here(&quot;data&quot;))
+dir_data_raw &lt;- file.path(
   dirname(here::here()), 
   &quot;DataRawGelaDURT&quot;
 )
@@ -208,7 +209,7 @@ dir_data_raw &lt;- file.path(
 )
 path_data_raw &lt;- file.path(
   dir_data_raw, 
-  &quot;Fig. 2 Frequencies.xlsx&quot;
+  &quot;2021_09_16,Gela,email-Fig. 2 Frequencies.xlsx&quot;
 )
 
 data_tidy_freq &lt;- purrr::map_df(sheet_vec, function(sheet) {
@@ -221,8 +222,24 @@ data_tidy_freq &lt;- purrr::map_df(sheet_vec, function(sheet) {
     dplyr::mutate(
       pop = sheet
     ) 
+  
+  data_raw &lt;- data_raw %&gt;%
+    dplyr::rename(
+      pid_infant_bcg_no = `ID (D-BCG)...6`, 
+      pid_infant_bcg = `ID (D-BCG)...13`, 
+      pid_adult = `Sample ID`
+    ) %&gt;%
+    dplyr::select(
+      pid_infant_bcg_no, 
+      pid_infant_bcg, 
+      pid_adult, 
+      pop,
+      `No BCG`:After
+    ) 
+  
   data_raw_infant_bcg_no &lt;- data_raw %&gt;%
-    dplyr::select(pop, `No BCG`) %&gt;%
+    dplyr::select(pid_infant_bcg_no, pop, `No BCG`) %&gt;%
+    dplyr::rename(pid_sheet = pid_infant_bcg_no) %&gt;%
     dplyr::mutate(bcg = &quot;no bcg&quot;) %&gt;%
     dplyr::rename(freq = `No BCG`) %&gt;%
     dplyr::mutate(age = &quot;infant&quot;) %&gt;%
@@ -232,26 +249,27 @@ data_tidy_freq &lt;- purrr::map_df(sheet_vec, function(sheet) {
       paste0(&quot;0&quot;, row),
       row)) %&gt;%
     dplyr::mutate(pid = paste0(age, &quot;_&quot;, row)) %&gt;%
-    dplyr::select(pid, bcg, age, pop, freq) %&gt;%
+    dplyr::select(pid, pid_sheet, bcg, age, pop, freq) %&gt;%
     dplyr::filter(!is.na(freq))
   
   data_raw_infant_bcg &lt;- data_raw %&gt;%
-    dplyr::select(pop, `BCG`) %&gt;%
+    dplyr::select(pid_infant_bcg, pop, `BCG`) %&gt;%
+    dplyr::rename(pid_sheet = pid_infant_bcg) %&gt;%
     dplyr::mutate(bcg = &quot;bcg&quot;) %&gt;%
     dplyr::rename(freq = `BCG`) %&gt;%
     dplyr::mutate(age = &quot;infant&quot;) %&gt;%
-    dplyr::mutate(row = seq_len(dplyr::n()) +
-                    max(25, nrow(data_raw_infant_bcg_no))) %&gt;%
+    dplyr::mutate(row = 25 + seq_len(dplyr::n())) %&gt;%
     dplyr::mutate(row = ifelse(
       str_length(row) == 1, 
       paste0(&quot;0&quot;, row),
       row)) %&gt;%
     dplyr::mutate(pid = paste0(age, &quot;_&quot;, row)) %&gt;%
-    dplyr::select(pid, bcg, age, pop, freq) %&gt;%
+    dplyr::select(pid, pid_sheet, bcg, age, pop, freq) %&gt;%
     dplyr::filter(!is.na(freq))
-  
+
   data_raw_adult &lt;- data_raw %&gt;%
-    dplyr::select(pop, Before, After) %&gt;%
+    dplyr::select(pid_adult, pop, Before, After) %&gt;%
+    dplyr::rename(pid_sheet = pid_adult) %&gt;%
     dplyr::mutate(row = seq_len(dplyr::n())) %&gt;%
     dplyr::mutate(row = ifelse(
       str_length(row) == 1, 
@@ -261,12 +279,12 @@ data_tidy_freq &lt;- purrr::map_df(sheet_vec, function(sheet) {
     dplyr::mutate(pid = paste0(age, &quot;_&quot;, row)) %&gt;%
     dplyr::select(-row) %&gt;%
     tidyr::pivot_longer(
-      -c(pop, pid, age), 
+      -c(pid_sheet, pop, pid, age), 
       names_to = &quot;bcg&quot;, 
       values_to = &quot;freq&quot;
     ) %&gt;%
     dplyr::mutate(bcg = tolower(bcg)) %&gt;%
-    dplyr::select(pid, bcg, age, pop, freq) %&gt;%
+    dplyr::select(pid, pid_sheet, bcg, age, pop, freq) %&gt;%
     dplyr::filter(!is.na(freq))
   
   data_raw_infant_bcg_no %&gt;%
@@ -280,27 +298,77 @@ data_tidy_freq &lt;- purrr::map_df(sheet_vec, function(sheet) {
       bcg = tolower(bcg), 
       pop = long_to_short_pop[pop]
     ) %&gt;%
-    dplyr::select(-age)
+    dplyr::select(-age) %&gt;%
+    dplyr::select(-pid_sheet)
 }) %&gt;%
   tibble::as_tibble()</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...5
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...6`
+## * Group -&gt; Group...7
+## * Status -&gt; Status...8
+## * Race -&gt; Race...9
+## * ...
+## New names:
+## * `` -&gt; ...5
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...6`
+## * Group -&gt; Group...7
+## * Status -&gt; Status...8
+## * Race -&gt; Race...9
+## * ...
+## New names:
+## * `` -&gt; ...5
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...6`
+## * Group -&gt; Group...7
+## * Status -&gt; Status...8
+## * Race -&gt; Race...9
+## * ...
+## New names:
+## * `` -&gt; ...5
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...6`
+## * Group -&gt; Group...7
+## * Status -&gt; Status...8
+## * Race -&gt; Race...9
+## * ...
+## New names:
+## * `` -&gt; ...5
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...6`
+## * Group -&gt; Group...7
+## * Status -&gt; Status...8
+## * Race -&gt; Race...9
+## * ...
+## New names:
+## * `` -&gt; ...5
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...6`
+## * Group -&gt; Group...7
+## * Status -&gt; Status...8
+## * Race -&gt; Race...9
+## * ...
+## New names:
+## * `` -&gt; ...5
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...6`
+## * Group -&gt; Group...7
+## * Status -&gt; Status...8
+## * Race -&gt; Race...9
+## * ...</code></pre>
 <pre class="r"><code>datautils::view_cols(
   data_tidy_freq
 )</code></pre>
 <pre><code>## [1] &quot;pid&quot;
-##  [1] &quot;infant_60&quot; &quot;infant_38&quot; &quot;infant_02&quot; &quot;adult_27&quot;  &quot;adult_17&quot;  &quot;adult_04&quot; 
-##  [7] &quot;infant_48&quot; &quot;adult_11&quot;  &quot;infant_44&quot; &quot;infant_47&quot; &quot;infant_12&quot; &quot;infant_20&quot;
-## [13] &quot;infant_34&quot; &quot;adult_08&quot;  &quot;infant_71&quot; &quot;infant_30&quot; &quot;infant_27&quot; &quot;adult_13&quot; 
-## [19] &quot;infant_29&quot; &quot;infant_37&quot;
-## [1] &quot;85 unique entries not displayed&quot;
+##  [1] &quot;infant_44&quot; &quot;infant_07&quot; &quot;infant_47&quot; &quot;adult_23&quot;  &quot;infant_36&quot; &quot;infant_57&quot;
+##  [7] &quot;infant_65&quot; &quot;infant_21&quot; &quot;infant_14&quot; &quot;adult_03&quot;  &quot;adult_20&quot;  &quot;infant_68&quot;
+## [13] &quot;adult_09&quot;  &quot;infant_59&quot; &quot;infant_05&quot; &quot;infant_39&quot; &quot;adult_16&quot;  &quot;infant_55&quot;
+## [19] &quot;adult_12&quot;  &quot;infant_54&quot;
+## [1] &quot;80 unique entries not displayed&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;bcg&quot;
-## [1] &quot;bcg&quot;    &quot;no bcg&quot; &quot;before&quot; &quot;after&quot; 
+## [1] &quot;no bcg&quot; &quot;before&quot; &quot;bcg&quot;    &quot;after&quot; 
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;pop&quot;
-## [1] &quot;cd4_ifng&quot; &quot;mait&quot;     &quot;cd4&quot;      &quot;gem&quot;      &quot;gd&quot;       &quot;nkt&quot;      &quot;cd1b&quot;    
+## [1] &quot;cd1b&quot;     &quot;cd4&quot;      &quot;cd4_ifng&quot; &quot;gem&quot;      &quot;gd&quot;       &quot;nkt&quot;      &quot;mait&quot;    
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;freq&quot;
-## [1] 6.41e+01 1.33e+00 8.00e+01 3.90e-02 2.59e-04
+## [1] 7.24e+01 2.68e-04 6.60e-04 4.99e+01 6.09e+01
 ## [1] &quot;_____________________&quot;</code></pre>
 <pre><code>## Warning: Not all unique entries displayed for these non-numeric cols: pid</code></pre>
 <pre class="r"><code>usethis::use_data(data_tidy_freq, 
@@ -321,7 +389,7 @@ data_tidy_freq &lt;- purrr::map_df(sheet_vec, function(sheet) {
 
 path_data_raw &lt;- file.path(
   dir_data_raw, 
-  &quot;Fig. 3 Activation profile_infants.xlsx&quot;
+  &quot;2021_09_16,Gela,email-Fig. 3 Activation profile_infants.xlsx&quot;
 )
 data_tidy_hladr_infant &lt;- purrr::map_df(sheet_vec, function(sheet) {
   data_raw &lt;- readxl::read_xlsx(
@@ -335,10 +403,19 @@ data_tidy_hladr_infant &lt;- purrr::map_df(sheet_vec, function(sheet) {
     )
   if(nrow(data_raw) == 0) print(sheet)
   
-  data_raw &lt;- data_raw[,c(&quot;pop&quot;, &quot;No BCG&quot;, &quot;BCG&quot;)]
+  cn_vec &lt;- colnames(data_raw)
+  id_vec_ind &lt;- which(grepl(&quot;ID \\(D-BCG\\)&quot;, cn_vec))
+  cn_vec_id &lt;- cn_vec[id_vec_ind]
+  data_raw &lt;- data_raw[,c(&quot;pop&quot;, &quot;No BCG&quot;, &quot;BCG&quot;, cn_vec_id)]
+  colnames(data_raw) &lt;- c(
+    colnames(data_raw)[1:3], 
+    &quot;pid_infant_bcg_no&quot;,
+    &quot;pid_infant_bcg&quot;
+  )
 
   data_raw_infant_bcg_no &lt;- data_raw %&gt;%
-    dplyr::select(pop, `No BCG`) %&gt;%
+    dplyr::select(pid_infant_bcg_no, pop, `No BCG`) %&gt;%
+    dplyr::rename(pid_sheet = pid_infant_bcg_no) %&gt;%
     dplyr::mutate(bcg = &quot;no bcg&quot;) %&gt;%
     dplyr::rename(hladr_mfi = `No BCG`) %&gt;%
     dplyr::mutate(age = &quot;infant&quot;) %&gt;%
@@ -348,11 +425,12 @@ data_tidy_hladr_infant &lt;- purrr::map_df(sheet_vec, function(sheet) {
       paste0(&quot;0&quot;, row),
       row)) %&gt;%
     dplyr::mutate(pid = paste0(age, &quot;_&quot;, row)) %&gt;%
-    dplyr::select(pid, bcg, age, pop, hladr_mfi) %&gt;%
+    dplyr::select(pid, pid_sheet, bcg, age, pop, hladr_mfi) %&gt;%
     dplyr::filter(!is.na(hladr_mfi))
   
   data_raw_infant_bcg &lt;- data_raw %&gt;%
-    dplyr::select(pop, `BCG`) %&gt;%
+    dplyr::select(pid_infant_bcg, pop, `BCG`) %&gt;%
+    dplyr::rename(pid_sheet = pid_infant_bcg) %&gt;%
     dplyr::mutate(bcg = &quot;bcg&quot;) %&gt;%
     dplyr::rename(hladr_mfi = `BCG`) %&gt;%
     dplyr::mutate(age = &quot;infant&quot;) %&gt;%
@@ -362,7 +440,7 @@ data_tidy_hladr_infant &lt;- purrr::map_df(sheet_vec, function(sheet) {
       paste0(&quot;0&quot;, row),
       row)) %&gt;%
     dplyr::mutate(pid = paste0(age, &quot;_&quot;, row)) %&gt;%
-    dplyr::select(pid, bcg, age, pop, hladr_mfi) %&gt;%
+    dplyr::select(pid, pid_sheet, bcg, age, pop, hladr_mfi) %&gt;%
     dplyr::filter(!is.na(hladr_mfi))
   
   data_raw_infant_bcg_no %&gt;%
@@ -373,27 +451,63 @@ data_tidy_hladr_infant &lt;- purrr::map_df(sheet_vec, function(sheet) {
       bcg = tolower(bcg), 
       pop = long_to_short_pop[pop]
     ) %&gt;%
-    dplyr::select(-age)
+    dplyr::select(-age) %&gt;%
+    dplyr::select(-pid_sheet)
 }) %&gt;%
   tibble::as_tibble()</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...4
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...5`
+## * Group -&gt; Group...6
+## * Status -&gt; Status...7
+## * Race -&gt; Race...8
+## * ...</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...3
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...4`
+## * Group -&gt; Group...5
+## * Status -&gt; Status...6
+## * Race -&gt; Race...7
+## * ...
+## New names:
+## * `` -&gt; ...3
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...4`
+## * Group -&gt; Group...5
+## * Status -&gt; Status...6
+## * Race -&gt; Race...7
+## * ...
+## New names:
+## * `` -&gt; ...3
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...4`
+## * Group -&gt; Group...5
+## * Status -&gt; Status...6
+## * Race -&gt; Race...7
+## * ...
+## New names:
+## * `` -&gt; ...3
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...4`
+## * Group -&gt; Group...5
+## * Status -&gt; Status...6
+## * Race -&gt; Race...7
+## * ...</code></pre>
 <pre class="r"><code>datautils::view_cols(
   data_tidy_hladr_infant
 )</code></pre>
 <pre><code>## [1] &quot;pid&quot;
-##  [1] &quot;infant_28&quot; &quot;infant_73&quot; &quot;infant_22&quot; &quot;infant_08&quot; &quot;infant_59&quot; &quot;infant_23&quot;
-##  [7] &quot;infant_09&quot; &quot;infant_26&quot; &quot;infant_15&quot; &quot;infant_52&quot; &quot;infant_11&quot; &quot;infant_06&quot;
-## [13] &quot;infant_24&quot; &quot;infant_17&quot; &quot;infant_29&quot; &quot;infant_53&quot; &quot;infant_74&quot; &quot;infant_55&quot;
-## [19] &quot;infant_61&quot; &quot;infant_03&quot;
+##  [1] &quot;infant_24&quot; &quot;infant_30&quot; &quot;infant_31&quot; &quot;infant_44&quot; &quot;infant_03&quot; &quot;infant_49&quot;
+##  [7] &quot;infant_68&quot; &quot;infant_17&quot; &quot;infant_18&quot; &quot;infant_33&quot; &quot;infant_32&quot; &quot;infant_09&quot;
+## [13] &quot;infant_34&quot; &quot;infant_05&quot; &quot;infant_13&quot; &quot;infant_47&quot; &quot;infant_64&quot; &quot;infant_43&quot;
+## [19] &quot;infant_63&quot; &quot;infant_27&quot;
 ## [1] &quot;55 unique entries not displayed&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;bcg&quot;
 ## [1] &quot;bcg&quot;    &quot;no bcg&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;pop&quot;
-## [1] &quot;gd&quot;   &quot;cd1b&quot; &quot;mait&quot; &quot;nkt&quot;  &quot;cd4&quot; 
+## [1] &quot;cd4&quot;  &quot;cd1b&quot; &quot;nkt&quot;  &quot;gd&quot;   &quot;mait&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;hladr_mfi&quot;
-## [1]  106 3034  297  786  270
+## [1] 593  23 823 685 317
 ## [1] &quot;_____________________&quot;</code></pre>
 <pre><code>## Warning: Not all unique entries displayed for these non-numeric cols: pid</code></pre>
 <pre class="r"><code>usethis::use_data(data_tidy_hladr_infant, 
@@ -413,15 +527,17 @@ data_tidy_hladr_infant &lt;- purrr::map_df(sheet_vec, function(sheet) {
 
 path_data_raw &lt;- file.path(
   dir_data_raw, 
-  &quot;Fig.4 Activation profile adults.xlsx&quot;
+  &quot;2021_09_16,Gela,email-Fig.4 Activation profile adults.xlsx&quot;
 )
 data_tidy_hladr_adult &lt;- purrr::map_df(sheet_vec, function(sheet) {
   data_raw &lt;- readxl::read_xlsx(
     file.path(
       path_data_raw 
     ), 
-    sheet = sheet
+    sheet = sheet, 
+    n_max = 25,
   ) %&gt;%
+    dplyr::select(`0`:`365`, `Sample ID`) %&gt;%
     dplyr::mutate(
       pop = sheet,
       age = &quot;adult&quot;,
@@ -433,43 +549,54 @@ data_tidy_hladr_adult &lt;- purrr::map_df(sheet_vec, function(sheet) {
         &quot;_&quot;,
         ifelse(str_length(row) == 1, 
                paste0(&quot;0&quot;, row), row))
-    ) 
+    ) %&gt;%
+    dplyr::rename(pid_sheet = `Sample ID`) %&gt;%
+    dplyr::select(-c(row, age))
   data_raw %&gt;%
     tidyr::pivot_longer(
-      -c(pid, pop, row, age), 
+      -c(pid, pid_sheet, pop), 
       names_to = &quot;days&quot;, 
       values_to = &quot;hladr_mfi&quot;
     ) %&gt;%
     dplyr::select(
-      pid, age, pop, days, hladr_mfi
+      pid, pop, days, hladr_mfi
     ) %&gt;%
     dplyr::mutate(
       pop = long_to_short_pop[pop]
     ) %&gt;%
     dplyr::mutate(
       days = as.integer(days)
-    ) %&gt;%
-    dplyr::select(-age)
+    )
 }) %&gt;%
   tibble::as_tibble()</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...5
+## New names:
+## * `` -&gt; ...5
+## New names:
+## * `` -&gt; ...5
+## New names:
+## * `` -&gt; ...5
+## New names:
+## * `` -&gt; ...5</code></pre>
 <pre class="r"><code>datautils::view_cols(
   data_tidy_hladr_adult
 )</code></pre>
 <pre><code>## [1] &quot;pid&quot;
-##  [1] &quot;adult_22&quot; &quot;adult_05&quot; &quot;adult_11&quot; &quot;adult_03&quot; &quot;adult_07&quot; &quot;adult_10&quot;
-##  [7] &quot;adult_23&quot; &quot;adult_25&quot; &quot;adult_17&quot; &quot;adult_01&quot; &quot;adult_18&quot; &quot;adult_21&quot;
-## [13] &quot;adult_12&quot; &quot;adult_02&quot; &quot;adult_14&quot; &quot;adult_08&quot; &quot;adult_19&quot; &quot;adult_20&quot;
-## [19] &quot;adult_16&quot; &quot;adult_24&quot;
+##  [1] &quot;adult_13&quot; &quot;adult_04&quot; &quot;adult_22&quot; &quot;adult_25&quot; &quot;adult_18&quot; &quot;adult_09&quot;
+##  [7] &quot;adult_19&quot; &quot;adult_23&quot; &quot;adult_12&quot; &quot;adult_16&quot; &quot;adult_06&quot; &quot;adult_07&quot;
+## [13] &quot;adult_01&quot; &quot;adult_20&quot; &quot;adult_14&quot; &quot;adult_02&quot; &quot;adult_10&quot; &quot;adult_21&quot;
+## [19] &quot;adult_15&quot; &quot;adult_05&quot;
 ## [1] &quot;5 unique entries not displayed&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;pop&quot;
-## [1] &quot;cd4&quot;  &quot;mait&quot; &quot;gd&quot;   &quot;nkt&quot;  &quot;cd1b&quot;
+## [1] &quot;nkt&quot;  &quot;cd4&quot;  &quot;cd1b&quot; &quot;gd&quot;   &quot;mait&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;days&quot;
-## [1]  35  21 365   0
+## [1]   0  35  21 365
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;hladr_mfi&quot;
-## [1]   93.8 1972.0  120.0  627.0     NA
+## [1]  720.0   97.8 1523.0  970.0     NA
 ## [1] &quot;_____________________&quot;</code></pre>
 <pre><code>## Warning: Not all unique entries displayed for these non-numeric cols: pid</code></pre>
 <pre class="r"><code>usethis::use_data(data_tidy_hladr_adult, 
@@ -477,8 +604,314 @@ data_tidy_hladr_adult &lt;- purrr::map_df(sheet_vec, function(sheet) {
 <pre><code>## v Saving &#39;data_tidy_hladr_adult&#39; to &#39;data/data_tidy_hladr_adult.rda&#39;</code></pre>
 <pre><code>## * Document your data (see &#39;https://r-pkgs.org/data.html&#39;)</code></pre>
 </div>
+<div id="memory-profile-figure-6" class="section level2">
+<h2>Memory profile (Figure 6)</h2>
+<pre class="r"><code>sheet_vec &lt;- c(
+  &quot;MAIT cells&quot;, 
+  &quot;NKT cells&quot;, 
+  &quot;gd T cells&quot;, 
+  &quot;CD4 T cells&quot;
+)
+path_data_raw &lt;- file.path(
+  dir_data_raw, 
+  &quot;2021_09_16,Gela,email-Figure 5- Memory profile.xlsx&quot;
+)
+data_tidy_mem &lt;- purrr::map_df(sheet_vec, function(sheet) {
+  data_raw_grp &lt;- readxl::read_xlsx(
+    file.path(
+      path_data_raw 
+    ), 
+    sheet = sheet, 
+    n_max = 0
+  )
+  data_raw_pop &lt;- readxl::read_xlsx(
+    file.path(
+      path_data_raw 
+    ), 
+    sheet = sheet, 
+    n_max = 1,
+    skip = 0
+  )
+  info_tbl &lt;- data_raw_pop %&gt;%
+    dplyr::mutate(id = 1) %&gt;%
+    tidyr::pivot_longer(
+      -id, 
+      names_to = &quot;grp&quot;, 
+      values_to = &quot;pop&quot;
+    ) %&gt;%
+    dplyr::select(-id) %&gt;%
+    dplyr::filter(!grepl(&quot;^\\.\\..\\d+$&quot;, grp)) %&gt;%
+    dplyr::mutate(grp = stringr::str_remove_all(grp, &quot;\\.+\\d*$&quot;))
+  pop_vec &lt;- info_tbl$pop[!is.na(info_tbl$pop)]
+  info_tbl[seq(2, nrow(info_tbl), by = 3), &quot;pop&quot;] &lt;- pop_vec 
+  info_tbl[seq(3, nrow(info_tbl), by = 3), &quot;pop&quot;] &lt;- pop_vec 
+  cn_vec &lt;- paste0(info_tbl$grp, &quot;_&quot;, info_tbl$pop)
+  
+  data_raw &lt;- readxl::read_xlsx(
+    file.path(
+      path_data_raw 
+    ), 
+    sheet = sheet, 
+    col_names = FALSE, 
+    skip = 2,
+    n_max = 25
+  )
+  data_raw &lt;- data_raw[
+    , purrr::map_lgl(data_raw, function(x) !all(is.na(x)))
+    ]
+  colnames(data_raw) &lt;- cn_vec
+  
+  data_raw %&gt;% 
+    dplyr::mutate(
+      row = seq_len(dplyr::n())
+    ) %&gt;%
+    tidyr::pivot_longer(
+      - row, 
+      names_to = &quot;grp&quot;, 
+      values_to = &quot;freq&quot;
+    ) %&gt;%
+    tidyr::separate(
+      col = &quot;grp&quot;, 
+      into = c(&quot;grp_2&quot;, &quot;pop&quot;), 
+      sep = &quot;_&quot;
+    ) %&gt;%
+    dplyr::mutate(
+      age = ifelse(grp_2 == &quot;Adult&quot;, &quot;adult&quot;, &quot;infant&quot;), 
+      bcg = ifelse(grp_2 == &quot;Adult&quot;, &quot;day_365&quot;, tolower(grp_2))
+    ) %&gt;%
+    dplyr::select(-grp_2) %&gt;%
+    dplyr::group_by(age, bcg) %&gt;%
+    dplyr::mutate(
+      row = 1:25 + ifelse(bcg == &quot;bcg&quot;, 25, 0), 
+      row = ifelse(age == &quot;adult&quot;, 1:25, row),
+      row = as.character(row),
+      row = ifelse(
+        stringr::str_length(row) == 1, 
+        paste0(&quot;0&quot;, row),
+        row
+        ),
+      pid = paste0(age, &quot;_&quot;, row)
+    ) %&gt;%
+    dplyr::ungroup() %&gt;%
+    dplyr::rename(
+      pop_sub = pop
+    ) %&gt;%
+    dplyr::mutate(
+      pop = long_to_short_pop[sheet]
+    ) %&gt;%
+    dplyr::select(pid, age, bcg, pop, pop_sub, freq)
+}) %&gt;%
+  tibble::as_tibble()</code></pre>
+<pre><code>## New names:
+## * `No BCG` -&gt; `No BCG...1`
+## * BCG -&gt; BCG...2
+## * Adult -&gt; Adult...3
+## * `` -&gt; ...4
+## * `No BCG` -&gt; `No BCG...5`
+## * ...
+## New names:
+## * `No BCG` -&gt; `No BCG...1`
+## * BCG -&gt; BCG...2
+## * Adult -&gt; Adult...3
+## * `` -&gt; ...4
+## * `No BCG` -&gt; `No BCG...5`
+## * ...</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...1
+## * `` -&gt; ...2
+## * `` -&gt; ...3
+## * `` -&gt; ...4
+## * `` -&gt; ...5
+## * ...</code></pre>
+<pre><code>## New names:
+## * `No BCG` -&gt; `No BCG...1`
+## * BCG -&gt; BCG...2
+## * Adult -&gt; Adult...3
+## * `` -&gt; ...4
+## * `No BCG` -&gt; `No BCG...5`
+## * ...
+## New names:
+## * `No BCG` -&gt; `No BCG...1`
+## * BCG -&gt; BCG...2
+## * Adult -&gt; Adult...3
+## * `` -&gt; ...4
+## * `No BCG` -&gt; `No BCG...5`
+## * ...</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...1
+## * `` -&gt; ...2
+## * `` -&gt; ...3
+## * `` -&gt; ...4
+## * `` -&gt; ...5
+## * ...</code></pre>
+<pre><code>## New names:
+## * `No BCG` -&gt; `No BCG...1`
+## * BCG -&gt; BCG...2
+## * Adult -&gt; Adult...3
+## * `` -&gt; ...4
+## * `No BCG` -&gt; `No BCG...5`
+## * ...
+## New names:
+## * `No BCG` -&gt; `No BCG...1`
+## * BCG -&gt; BCG...2
+## * Adult -&gt; Adult...3
+## * `` -&gt; ...4
+## * `No BCG` -&gt; `No BCG...5`
+## * ...</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...1
+## * `` -&gt; ...2
+## * `` -&gt; ...3
+## * `` -&gt; ...4
+## * `` -&gt; ...5
+## * ...</code></pre>
+<pre><code>## New names:
+## * `No BCG` -&gt; `No BCG...1`
+## * BCG -&gt; BCG...2
+## * Adult -&gt; Adult...3
+## * `` -&gt; ...4
+## * `No BCG` -&gt; `No BCG...5`
+## * ...
+## New names:
+## * `No BCG` -&gt; `No BCG...1`
+## * BCG -&gt; BCG...2
+## * Adult -&gt; Adult...3
+## * `` -&gt; ...4
+## * `No BCG` -&gt; `No BCG...5`
+## * ...</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...1
+## * `` -&gt; ...2
+## * `` -&gt; ...3
+## * `` -&gt; ...4
+## * `` -&gt; ...5
+## * ...</code></pre>
+<pre class="r"><code>datautils::view_cols(
+  data_tidy_mem
+)</code></pre>
+<pre><code>## [1] &quot;pid&quot;
+##  [1] &quot;infant_47&quot; &quot;adult_10&quot;  &quot;infant_15&quot; &quot;adult_08&quot;  &quot;infant_12&quot; &quot;infant_02&quot;
+##  [7] &quot;infant_14&quot; &quot;infant_45&quot; &quot;infant_41&quot; &quot;adult_25&quot;  &quot;infant_36&quot; &quot;infant_06&quot;
+## [13] &quot;adult_18&quot;  &quot;infant_40&quot; &quot;adult_19&quot;  &quot;infant_23&quot; &quot;infant_34&quot; &quot;infant_43&quot;
+## [19] &quot;adult_22&quot;  &quot;infant_24&quot;
+## [1] &quot;55 unique entries not displayed&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;age&quot;
+## [1] &quot;infant&quot; &quot;adult&quot; 
+## [1] &quot;_____________________&quot;
+## [1] &quot;bcg&quot;
+## [1] &quot;day_365&quot; &quot;bcg&quot;     &quot;no bcg&quot; 
+## [1] &quot;_____________________&quot;
+## [1] &quot;pop&quot;
+## [1] &quot;mait&quot; &quot;gd&quot;   &quot;cd4&quot;  &quot;nkt&quot; 
+## [1] &quot;_____________________&quot;
+## [1] &quot;pop_sub&quot;
+## [1] &quot;CD45RA-CCR7-&quot;  &quot;CCR7+CD45RA+&quot;  &quot;CD45RA- CCR7+&quot; &quot;CD45RA+CCR7-&quot; 
+## [1] &quot;_____________________&quot;
+## [1] &quot;freq&quot;
+## [1]  2.30  1.99 31.10  4.67    NA
+## [1] &quot;_____________________&quot;</code></pre>
+<pre><code>## Warning: Not all unique entries displayed for these non-numeric cols: pid</code></pre>
+<pre class="r"><code>usethis::use_data(
+  data_tidy_mem, 
+  overwrite = TRUE
+  )</code></pre>
+<pre><code>## v Saving &#39;data_tidy_mem&#39; to &#39;data/data_tidy_mem.rda&#39;</code></pre>
+<pre><code>## * Document your data (see &#39;https://r-pkgs.org/data.html&#39;)</code></pre>
+</div>
+<div id="supp-fig" class="section level2">
+<h2>Supp Fig</h2>
+<pre class="r"><code>sheet_vec &lt;- c(
+  &quot;MAIT cells&quot;, 
+  &quot;NKT cells&quot;, 
+  &quot;gd T cells&quot;, 
+  &quot;CD4 T cells&quot;
+)
+path_data_raw &lt;- file.path(
+  dir_data_raw, 
+  &quot;2021_09_16,Gela,email-Supplimental figure.xlsx&quot;
+)
+
+data_tidy_mem_long &lt;- purrr::map_df(sheet_vec, function(sheet) {
+  data_raw &lt;- readxl::read_xlsx(
+    file.path(
+      path_data_raw 
+    ), 
+    sheet = sheet, 
+    n_max = 25,
+  ) %&gt;%
+    dplyr::select(`CCR7+CD45RA+`:`CCR7+CD45RA-`, `Sample ID`) %&gt;%
+    dplyr::mutate(
+      pop = sheet,
+      age = &quot;adult&quot;,
+      row = 1:(dplyr::n())
+    )  %&gt;%
+    dplyr::mutate(
+      pid = paste0(
+        age,
+        &quot;_&quot;,
+        ifelse(str_length(row) == 1, 
+               paste0(&quot;0&quot;, row), row))
+    ) %&gt;%
+    dplyr::rename(pid_sheet = `Sample ID`) %&gt;%
+    dplyr::select(-c(row, age))
+  data_raw %&gt;%
+    tidyr::pivot_longer(
+      -c(pid, pid_sheet, pop), 
+      names_to = &quot;pop_sub&quot;, 
+      values_to = &quot;freq&quot;
+    ) %&gt;%
+    dplyr::select(
+      pid, pop, pop_sub, freq
+    ) %&gt;%
+    dplyr::mutate(
+      pop = long_to_short_pop[pop]
+    )
+}) %&gt;%
+  tibble::as_tibble()</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...5
+## New names:
+## * `` -&gt; ...5
+## New names:
+## * `` -&gt; ...5
+## New names:
+## * `` -&gt; ...5</code></pre>
+<pre class="r"><code>datautils::view_cols(
+  data_tidy_mem_long
+)</code></pre>
+<pre><code>## [1] &quot;pid&quot;
+##  [1] &quot;adult_07&quot; &quot;adult_24&quot; &quot;adult_10&quot; &quot;adult_04&quot; &quot;adult_01&quot; &quot;adult_25&quot;
+##  [7] &quot;adult_03&quot; &quot;adult_02&quot; &quot;adult_23&quot; &quot;adult_05&quot; &quot;adult_13&quot; &quot;adult_22&quot;
+## [13] &quot;adult_19&quot; &quot;adult_20&quot; &quot;adult_15&quot; &quot;adult_14&quot; &quot;adult_12&quot; &quot;adult_16&quot;
+## [19] &quot;adult_09&quot; &quot;adult_08&quot;
+## [1] &quot;5 unique entries not displayed&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;pop&quot;
+## [1] &quot;nkt&quot;  &quot;mait&quot; &quot;gd&quot;   &quot;cd4&quot; 
+## [1] &quot;_____________________&quot;
+## [1] &quot;pop_sub&quot;
+## [1] &quot;CCR7+CD45RA-&quot; &quot;CCR7+CD45RA+&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;freq&quot;
+##  [1] &quot;43.8&quot;   &quot;35.0&quot;   &quot;4.90 %&quot; &quot;36.2&quot;   &quot;0.91 %&quot; &quot;21.4 %&quot; &quot;5.20 %&quot; &quot;48.2&quot;  
+##  [9] &quot;61.2 %&quot; &quot;5.17 %&quot; &quot;2.08 %&quot; &quot;0.32 %&quot; &quot;43.2&quot;   &quot;2.54 %&quot; &quot;6.10 %&quot; &quot;58.0 %&quot;
+## [17] &quot;44.5 %&quot; &quot;44.1&quot;   &quot;4.04 %&quot; &quot;25.3&quot;  
+## [1] &quot;163 unique entries not displayed&quot;
+## [1] &quot;_____________________&quot;</code></pre>
+<pre><code>## Warning: Not all unique entries displayed for these non-numeric cols: pid, freq</code></pre>
+<pre class="r"><code>usethis::use_data(
+  data_tidy_mem_long, 
+  overwrite = TRUE
+  )</code></pre>
+<pre><code>## v Saving &#39;data_tidy_mem_long&#39; to &#39;data/data_tidy_mem_long.rda&#39;</code></pre>
+<pre><code>## * Document your data (see &#39;https://r-pkgs.org/data.html&#39;)</code></pre>
+</div>
 <div id="clinical-data---infants" class="section level2">
 <h2>Clinical data - Infants</h2>
+<div id="copy-of-delayed-bcg-samples-for-anele_.xlsx" class="section level3">
+<h3>Copy of delayed BCG samples for Anele_.xlsx</h3>
+<p>We read in the clinical data from <code>Copy of delayed BCG samples for Anele_.xlsx</code>. This was the spreadsheet originally provided to get the clinical data from. However, it did not have the gender for the infants and did not have the PIDs for the extra twenty-five infants who were given BCG at birth and had their CD4 T cell IFN<span class="math inline">\(\gamma\)</span> frequency measured. It did, however, provide the following extra variables: gestational age, weight, length and head circumference. In addition, it provides a check on the data read in from the other spreadsheet giving clinical data regarding the infants.</p>
 <pre class="r"><code>path_data_raw &lt;- file.path(
   dir_data_raw, 
   &quot;Copy of delayed BCG samples for Anele_.xlsx&quot;
@@ -488,7 +921,7 @@ data_tidy_clin_infant_bcg &lt;- readxl::read_xlsx(
   skip = 4, 
   n_max = 25
   ) %&gt;%
-  dplyr::mutate(bcg = &quot;no bcg&quot;) %&gt;%
+  dplyr::mutate(bcg = &quot;bcg&quot;) %&gt;%
   dplyr::mutate(age = &quot;infant&quot;) %&gt;%
     dplyr::mutate(row = seq_len(dplyr::n())) %&gt;%
     dplyr::mutate(row = ifelse(
@@ -504,7 +937,7 @@ data_tidy_clin_infant_bcg_no &lt;- readxl::read_xlsx(
   n_max = 25, 
   col_names = FALSE
   ) %&gt;%
-  dplyr::mutate(bcg = &quot;bcg&quot;) %&gt;%
+  dplyr::mutate(bcg = &quot;no bcg&quot;) %&gt;%
   dplyr::mutate(age = &quot;infant&quot;) %&gt;%
   dplyr::mutate(row = seq_len(dplyr::n()) + 25) %&gt;%
   dplyr::mutate(row = ifelse(
@@ -540,46 +973,237 @@ data_tidy_clin_infant &lt;- data_tidy_clin_infant %&gt;%
   dplyr::mutate(
     age = &quot;infant&quot;
   ) %&gt;%
-  dplyr::rename(pid = pid_r) %&gt;%
-  dplyr::select(-bcg) %&gt;%
-  dplyr::select(-pid_sheet)</code></pre>
+  dplyr::rename(pid = pid_r)
+
+data_tidy_clin_infant_lab &lt;- data_tidy_clin_infant %&gt;%
+  dplyr::group_by(pid_sheet, pid) %&gt;%
+  dplyr::slice(1) %&gt;%
+  dplyr::ungroup() %&gt;%
+  dplyr::select(pid_sheet, pid)
+r_to_sheet_pid_infant &lt;- setNames(data_tidy_clin_infant_lab$pid_sheet, 
+                                  data_tidy_clin_infant_lab$pid)
+sheet_to_r_pid_infant &lt;- setNames(names(r_to_sheet_pid_infant), 
+                                  r_to_sheet_pid_infant)
+
+data_tidy_clin_infant &lt;- data_tidy_clin_infant %&gt;%
+  dplyr::select(-pid_sheet)
+
+data_tidy_clin_infant &lt;- data_tidy_clin_infant %&gt;%
+  dplyr::rename(race = ethnicity)
+chr_to_num_race_infant &lt;- c(&quot;coloured&quot; = &quot;2&quot;, 
+                            &quot;black&quot; = &quot;1&quot;)
+data_tidy_clin_infant &lt;- data_tidy_clin_infant %&gt;%
+  dplyr::mutate(
+    race = chr_to_num_race_infant[race]
+  ) %&gt;%
+  dplyr::mutate(age = &quot;infant&quot;)</code></pre>
+<div id="checks" class="section level4">
+<h4>Checks</h4>
+<pre class="r"><code>testthat::expect_identical(nrow(data_tidy_clin_infant), 50L)
+testthat::expect_identical(unique(data_tidy_clin_infant$race),
+                           c(&quot;2&quot;, &quot;1&quot;))
+testthat::expect_identical(unique(data_tidy_clin_infant$bcg),
+                           c(&quot;bcg&quot;, &quot;no bcg&quot;))</code></pre>
+</div>
+<div id="view" class="section level4">
+<h4>View</h4>
 <pre class="r"><code>datautils::view_cols(
   data_tidy_clin_infant
 )</code></pre>
 <pre><code>## [1] &quot;pid&quot;
-##  [1] &quot;infant_05&quot; &quot;infant_19&quot; &quot;infant_24&quot; &quot;infant_49&quot; &quot;infant_10&quot; &quot;infant_34&quot;
-##  [7] &quot;infant_12&quot; &quot;infant_48&quot; &quot;infant_41&quot; &quot;infant_31&quot; &quot;infant_17&quot; &quot;infant_45&quot;
-## [13] &quot;infant_47&quot; &quot;infant_38&quot; &quot;infant_29&quot; &quot;infant_13&quot; &quot;infant_50&quot; &quot;infant_43&quot;
-## [19] &quot;infant_36&quot; &quot;infant_44&quot;
+##  [1] &quot;infant_48&quot; &quot;infant_37&quot; &quot;infant_10&quot; &quot;infant_09&quot; &quot;infant_20&quot; &quot;infant_23&quot;
+##  [7] &quot;infant_25&quot; &quot;infant_49&quot; &quot;infant_36&quot; &quot;infant_41&quot; &quot;infant_13&quot; &quot;infant_06&quot;
+## [13] &quot;infant_32&quot; &quot;infant_16&quot; &quot;infant_03&quot; &quot;infant_14&quot; &quot;infant_34&quot; &quot;infant_11&quot;
+## [19] &quot;infant_31&quot; &quot;infant_02&quot;
 ## [1] &quot;30 unique entries not displayed&quot;
 ## [1] &quot;_____________________&quot;
-## [1] &quot;ethnicity&quot;
-## [1] &quot;coloured&quot; &quot;black&quot;   
+## [1] &quot;race&quot;
+## [1] &quot;1&quot; &quot;2&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;gest_age&quot;
-## [1] 42 37 38 41 39
+## [1] 40 39 37 38 41
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;weight&quot;
-## [1] 3.52 2.92 3.16 3.82 3.08
+## [1] 2.60 3.05 2.80 3.08 2.74
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;length&quot;
-## [1] 52 58 47 56 55
+## [1] 47 59 49 55 53
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;head_circ&quot;
-## [1] 33.5 31.0 34.0 32.0 30.0
+## [1] 31.8 30.0 31.5 32.0 31.0
+## [1] &quot;_____________________&quot;
+## [1] &quot;bcg&quot;
+## [1] &quot;no bcg&quot; &quot;bcg&quot;   
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;age&quot;
 ## [1] &quot;infant&quot;
+## [1] &quot;_____________________&quot;</code></pre>
+<pre><code>## Warning: Not all unique entries displayed for these non-numeric cols: pid</code></pre>
+</div>
+</div>
+<div id="gelaemail-fig.-2-frequencies.xlsx" class="section level3">
+<h3>2021_09_16,Gela,email-Fig. 2 Frequencies.xlsx</h3>
+<p>We read in the clinical data from <code>2021_09_16,Gela,email-Fig. 2 Frequencies.xlsx</code>. This was provided after realising that the previous infant clinical data spreadsheet did not have the PIDs for all the infants and did not provide the key potential confounder, sex.</p>
+<pre class="r"><code>path_data_raw &lt;- file.path(
+  dir_data_raw, 
+  &quot;2021_09_16,Gela,email-Fig. 2 Frequencies.xlsx&quot;
+)
+data_tidy_clin_infant_raw_anele &lt;- readxl::read_excel(
+  path_data_raw, 
+  sheet = &quot;IFNg+ CD4 T cells&quot;, 
+  n_max = 50
+)</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...5
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...6`
+## * Group -&gt; Group...7
+## * Status -&gt; Status...8
+## * Race -&gt; Race...9
+## * ...</code></pre>
+<pre class="r"><code>data_tidy_clin_infant_bcg_anele &lt;- data_tidy_clin_infant_raw_anele %&gt;%
+  dplyr::select(`ID (D-BCG)...13`, `Race...16`:`Age (weeks)...18`) %&gt;%
+  dplyr::rename(pid_sheet = `ID (D-BCG)...13`, 
+                race = `Race...16`,
+                sex = `Sex...17`,
+                visit_age = `Age (weeks)...18`) %&gt;%
+  dplyr::mutate(bcg = &quot;bcg&quot;)
+data_tidy_clin_infant_bcg_no_anele &lt;- data_tidy_clin_infant_raw_anele %&gt;%
+  dplyr::select(`ID (D-BCG)...6`, `Race...9`:`Age (weeks)...11`) %&gt;%
+  dplyr::rename(pid_sheet = `ID (D-BCG)...6`, 
+                race = `Race...9`,
+                sex = `Sex...10`,
+                visit_age = `Age (weeks)...11`) %&gt;%
+  dplyr::mutate(bcg = &quot;no bcg&quot;) %&gt;%
+  dplyr::filter(!is.na(pid_sheet))
+data_tidy_clin_infant_anele &lt;- data_tidy_clin_infant_bcg_anele %&gt;%
+  dplyr::bind_rows(data_tidy_clin_infant_bcg_no_anele) %&gt;%
+  dplyr::mutate(pid_sheet = as.character(pid_sheet))
+
+chr_to_num_sex_infant_anele &lt;- c(&quot;F&quot; = &quot;2&quot;, &quot;M&quot; = &quot;1&quot;)
+chr_to_num_race_infant_anele &lt;- c(&quot;black&quot; = &quot;1&quot;, &quot;coloured&quot; = &quot;2&quot;)
+
+data_tidy_clin_infant_anele &lt;- data_tidy_clin_infant_anele %&gt;%
+  dplyr::mutate(
+    race = chr_to_num_race_infant_anele[race], 
+    sex = chr_to_num_sex_infant_anele[sex]
+  ) %&gt;%
+  dplyr::mutate(
+    pid = sheet_to_r_pid_infant[pid_sheet]
+  ) %&gt;%
+  dplyr::mutate(age = &quot;infant&quot;) %&gt;%
+  dplyr::select(-pid_sheet)</code></pre>
+<div id="checks-1" class="section level4">
+<h4>Checks</h4>
+<pre class="r"><code>testthat::expect_identical(nrow(data_tidy_clin_infant_anele), 75L)
+testthat::expect_identical(sum(data_tidy_clin_infant_anele$bcg == &quot;bcg&quot;), 50L)
+testthat::expect_identical(unique(data_tidy_clin_infant_anele$race),
+                           c(&quot;2&quot;, &quot;1&quot;))
+testthat::expect_identical(unique(data_tidy_clin_infant_anele$sex),
+                           c(&quot;2&quot;, &quot;1&quot;))
+testthat::expect_identical(unique(data_tidy_clin_infant_anele$bcg),
+                           c(&quot;bcg&quot;, &quot;no bcg&quot;))</code></pre>
+</div>
+<div id="view-1" class="section level4">
+<h4>View</h4>
+<pre class="r"><code>datautils::view_cols(
+  data_tidy_clin_infant_anele
+)</code></pre>
+<pre><code>## [1] &quot;race&quot;
+## [1] &quot;2&quot; &quot;1&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;sex&quot;
+## [1] &quot;2&quot; &quot;1&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;visit_age&quot;
+## [1]  8.714286 10.857143  9.428571 11.000000 10.571429
+## [1] &quot;_____________________&quot;
+## [1] &quot;bcg&quot;
+## [1] &quot;no bcg&quot; &quot;bcg&quot;   
+## [1] &quot;_____________________&quot;
+## [1] &quot;pid&quot;
+##  [1] &quot;infant_33&quot; &quot;infant_44&quot; &quot;infant_38&quot; &quot;infant_49&quot; &quot;infant_19&quot; &quot;infant_30&quot;
+##  [7] &quot;infant_25&quot; &quot;infant_13&quot; &quot;infant_07&quot; &quot;infant_08&quot; &quot;infant_15&quot; &quot;infant_50&quot;
+## [13] &quot;infant_36&quot; &quot;infant_46&quot; &quot;infant_17&quot; &quot;infant_22&quot; &quot;infant_11&quot; &quot;infant_03&quot;
+## [19] &quot;infant_24&quot; NA         
+## [1] &quot;31 unique entries not displayed&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;age&quot;
+## [1] &quot;infant&quot;
+## [1] &quot;_____________________&quot;</code></pre>
+<pre><code>## Warning: Not all unique entries displayed for these non-numeric cols: pid</code></pre>
+</div>
+<div id="joining-infant-clinical-datasets" class="section level4">
+<h4>Joining infant clinical datasets</h4>
+<div id="checks-2" class="section level5">
+<h5>Checks</h5>
+<p>We join the above two datasets on <code>pid</code>, <code>race</code> and <code>bcg</code>. Since each <code>pid</code> between the datasets has the same <code>race</code> and <code>bcg</code> entry, we know that the joining is correct.</p>
+<pre class="r"><code>data_tidy_clin_infant &lt;- data_tidy_clin_infant %&gt;%
+  dplyr::full_join(
+    data_tidy_clin_infant_anele, 
+    by = c(&quot;pid&quot;, &quot;race&quot;, &quot;bcg&quot;, &quot;age&quot;)
+  )</code></pre>
+<pre class="r"><code>testthat::expect_identical(nrow(data_tidy_clin_infant), 75L)
+testthat::expect_identical(sum(data_tidy_clin_infant$bcg == &quot;bcg&quot;), 50L)
+testthat::expect_identical(sort(unique(data_tidy_clin_infant$race)),
+                           c(&quot;1&quot;, &quot;2&quot;))
+testthat::expect_identical(sort(unique(data_tidy_clin_infant$sex)),
+                           c(&quot;1&quot;, &quot;2&quot;))
+testthat::expect_identical(unique(data_tidy_clin_infant$bcg),
+                           c(&quot;bcg&quot;, &quot;no bcg&quot;))</code></pre>
+</div>
+<div id="view-2" class="section level5">
+<h5>View</h5>
+<pre class="r"><code>datautils::view_cols(
+  data_tidy_clin_infant
+)</code></pre>
+<pre><code>## [1] &quot;pid&quot;
+##  [1] &quot;infant_46&quot; &quot;infant_28&quot; &quot;infant_49&quot; &quot;infant_13&quot; &quot;infant_43&quot; &quot;infant_21&quot;
+##  [7] &quot;infant_31&quot; &quot;infant_24&quot; &quot;infant_18&quot; &quot;infant_05&quot; &quot;infant_44&quot; &quot;infant_19&quot;
+## [13] &quot;infant_04&quot; &quot;infant_29&quot; &quot;infant_30&quot; &quot;infant_07&quot; &quot;infant_40&quot; &quot;infant_11&quot;
+## [19] &quot;infant_14&quot; NA         
+## [1] &quot;31 unique entries not displayed&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;race&quot;
+## [1] &quot;2&quot; &quot;1&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;gest_age&quot;
+## [1] 40 38 37 42 NA
+## [1] &quot;_____________________&quot;
+## [1] &quot;weight&quot;
+## [1] 3.22 3.30 3.68 2.92   NA
+## [1] &quot;_____________________&quot;
+## [1] &quot;length&quot;
+## [1] 50 56 52 59 NA
+## [1] &quot;_____________________&quot;
+## [1] &quot;head_circ&quot;
+## [1] 34.0 35.0 29.0 31.5   NA
+## [1] &quot;_____________________&quot;
+## [1] &quot;bcg&quot;
+## [1] &quot;bcg&quot;    &quot;no bcg&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;age&quot;
+## [1] &quot;infant&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;sex&quot;
+## [1] &quot;2&quot; &quot;1&quot;
+## [1] &quot;_____________________&quot;
+## [1] &quot;visit_age&quot;
+## [1] 10.428571 10.571429 11.428571  8.000000  9.714286
 ## [1] &quot;_____________________&quot;</code></pre>
 <pre><code>## Warning: Not all unique entries displayed for these non-numeric cols: pid</code></pre>
 <pre class="r"><code>usethis::use_data(data_tidy_clin_infant, 
                   overwrite = TRUE)</code></pre>
 <pre><code>## v Saving &#39;data_tidy_clin_infant&#39; to &#39;data/data_tidy_clin_infant.rda&#39;</code></pre>
 <pre><code>## * Document your data (see &#39;https://r-pkgs.org/data.html&#39;)</code></pre>
-<p>Ignore mode of delivery and Apgar[5/10]Mins as the values are all the same, or almost so.</p>
+</div>
+</div>
+</div>
 </div>
 <div id="clinical-data---adults" class="section level2">
 <h2>Clinical data - Adults</h2>
+<div id="tbru-samples-for-anele-.xlsx" class="section level3">
+<h3>TBRU samples for Anele .xlsx</h3>
+<p>We read in the clinical data from <code>TBRU samples for Anele .xlsx</code>. This was the spreadsheet originally provided to give clinical data for the adults. We also compare it to the same read read in using different code, as well as another spreadsheet, to check that we are correct.</p>
 <pre class="r"><code>path_data_raw &lt;- file.path(
   dir_data_raw, 
   &quot;TBRU samples for Anele .xlsx&quot;
@@ -615,6 +1239,99 @@ data_tidy_clin_adult &lt;- readxl::read_xlsx(
   n_max = 25,
   sheet = &quot;Acquired TBRU samples&quot;
   ) %&gt;%
+  dplyr::rename(age_in_years = age, 
+                pid_sheet = `Sample ID`,
+                ppd = PPDmm) %&gt;%
+  dplyr::mutate(age = &quot;adult&quot;) %&gt;%
+  dplyr::mutate(row = seq_len(dplyr::n())) %&gt;%
+  dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0(&quot;0&quot;, row),
+      row)) %&gt;%
+  dplyr::mutate(pid = paste0(age, &quot;_&quot;, row)) %&gt;%
+  dplyr::select(-c(row)) %&gt;%
+  dplyr::select(pid, pid_sheet, age, age_in_years, sex, race,
+                hgbval, bcgscar, height, weight, ppd) 
+
+data_tidy_clin_adult_lab &lt;- data_tidy_clin_adult %&gt;%
+  dplyr::group_by(pid_sheet, pid) %&gt;%
+  dplyr::slice(1) %&gt;%
+  dplyr::ungroup() %&gt;%
+  dplyr::select(pid_sheet, pid)
+
+r_to_sheet_pid_adult &lt;- setNames(data_tidy_clin_adult_lab$pid_sheet, 
+                                 data_tidy_clin_adult_lab$pid)
+
+r_to_sheet_pid &lt;- c(
+  r_to_sheet_pid_infant, 
+  r_to_sheet_pid_adult
+)
+sheet_to_r_pid &lt;- setNames(
+  names(r_to_sheet_pid), 
+  r_to_sheet_pid
+)
+
+data_tidy_clin_adult &lt;- data_tidy_clin_adult %&gt;%
+  dplyr::select(-pid_sheet)
+
+data_tidy_clin_adult &lt;- data_tidy_clin_adult %&gt;%
+  dplyr::mutate(race = ifelse(race == 2, 3, race)) %&gt;%
+  dplyr::mutate(sex = as.character(sex), 
+                race = as.character(race), 
+                bcgscar = as.character(bcgscar))
+
+#num_to_chr_sex_adult &lt;- c(&quot;1&quot; = &quot;male&quot;, &quot;2&quot; = &quot;female&quot;)
+#num_to_chr_race_adult &lt;- c(&quot;3&quot; = &quot;non_african&quot;, &quot;1&quot; = &quot;african&quot;)
+data_tidy_clin_adult &lt;- data_tidy_clin_adult %&gt;%
+  dplyr::mutate(race = ifelse(race == &quot;3&quot;, &quot;2&quot;, race))# %&gt;%
+  #dplyr::mutate(sex = num_to_chr_sex_adult[sex],
+   #             race = num_to_chr_race_adult[race])
+
+data_tidy_clin_adult &lt;- data_tidy_clin_adult %&gt;%
+  dplyr::select(-bcgscar)</code></pre>
+<div id="checks-3" class="section level4">
+<h4>Checks</h4>
+<div id="against-itself" class="section level5">
+<h5>Against itself</h5>
+<pre class="r"><code>testthat::expect_identical(nrow(data_tidy_clin_adult), 25L)
+testthat::expect_identical(sum(data_tidy_clin_adult$age == &quot;adult&quot;), 25L)
+testthat::expect_identical(sort(unique(data_tidy_clin_adult$race)),
+                           c(&quot;1&quot;, &quot;2&quot;))
+testthat::expect_identical(sort(unique(data_tidy_clin_adult$sex)),
+                           c(&quot;1&quot;, &quot;2&quot;))</code></pre>
+</div>
+<div id="comparison-of-clinical-data-with-previous-development-and-manual" class="section level5">
+<h5>Comparison of clinical data with previous development and manual</h5>
+<pre class="r"><code>path_data_raw &lt;- file.path(
+  dir_data_raw, 
+  &quot;TBRU samples for Anele .xlsx&quot;
+)
+data_label_clin_adult_orig &lt;- readxl::read_xlsx(
+  path_data_raw, 
+  skip = 1, 
+  n_max = 25,
+  sheet = &quot;TBRU samples&quot;
+  ) %&gt;%
+  dplyr::mutate(age = &quot;adult&quot;) %&gt;%
+  dplyr::mutate(row = seq_len(dplyr::n())) %&gt;%
+  dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0(&quot;0&quot;, row),
+      row)) %&gt;%
+  dplyr::mutate(pid = paste0(age, &quot;_&quot;, row)) %&gt;%
+  dplyr::select(-c(row, age)) %&gt;%
+  dplyr::select(pid, `Sample ID`)
+sheet_to_r_pid_adult_orig &lt;- setNames(
+  data_label_clin_adult_orig$pid, 
+  data_label_clin_adult_orig$`Sample ID`
+)
+
+data_tidy_clin_adult_orig &lt;- readxl::read_xlsx(
+  path_data_raw, 
+  skip = 1, 
+  n_max = 25,
+  sheet = &quot;Acquired TBRU samples&quot;
+  ) %&gt;%
   dplyr::rename(age_in_years = age) %&gt;%
   dplyr::mutate(age = &quot;adult&quot;) %&gt;%
   dplyr::mutate(row = seq_len(dplyr::n())) %&gt;%
@@ -624,9 +1341,11 @@ data_tidy_clin_adult &lt;- readxl::read_xlsx(
       row)) %&gt;%
   dplyr::mutate(pid = paste0(age, &quot;_&quot;, row)) %&gt;%
   dplyr::select(-c(row)) %&gt;%
-  dplyr::select(pid, age, age_in_years, sex, race, hgbval, bcgscar, height, weight, PPDmm) %&gt;%
+  dplyr::select(pid, age, age_in_years, sex,
+                race, hgbval, bcgscar, height,
+                weight, PPDmm) %&gt;%
   dplyr::rename(ppd = PPDmm)
-data_tidy_clin_adult &lt;- data_tidy_clin_adult %&gt;%
+data_tidy_clin_adult_orig &lt;- data_tidy_clin_adult_orig %&gt;%
   dplyr::mutate(race = ifelse(race == 2, 3, race)) %&gt;%
   dplyr::mutate(sex = as.character(sex), 
                 race = as.character(race), 
@@ -634,52 +1353,178 @@ data_tidy_clin_adult &lt;- data_tidy_clin_adult %&gt;%
 
 num_to_chr_sex_adult &lt;- c(&quot;1&quot; = &quot;male&quot;, &quot;2&quot; = &quot;female&quot;)
 num_to_chr_race_adult &lt;- c(&quot;3&quot; = &quot;non_african&quot;, &quot;1&quot; = &quot;african&quot;)
-data_tidy_clin_adult &lt;- data_tidy_clin_adult %&gt;%
-  dplyr::mutate(race = ifelse(race == 2, 3, race)) %&gt;%
-  dplyr::mutate(sex = num_to_chr_sex_adult[sex],
-                race = num_to_chr_race_adult[race])
+data_tidy_clin_adult_orig &lt;- data_tidy_clin_adult_orig %&gt;%
+  dplyr::mutate(race = ifelse(race == &quot;2&quot;, &quot;3&quot;, race))
 
-data_tidy_clin_adult &lt;- data_tidy_clin_adult %&gt;%
+data_tidy_clin_adult_orig &lt;- data_tidy_clin_adult_orig %&gt;%
   dplyr::select(-bcgscar)</code></pre>
+<pre class="r"><code>data_tidy_clin_adult_orig_cat &lt;- data_tidy_clin_adult_orig %&gt;%
+  dplyr::select(pid, sex, race, age) %&gt;%
+  dplyr::mutate(sex = setNames(names(num_to_chr_sex_adult), 
+                               num_to_chr_sex_adult)[sex]) %&gt;%
+  dplyr::mutate(race = setNames(names(num_to_chr_race_adult), 
+                               num_to_chr_race_adult)[race]) %&gt;%
+  tidyr::pivot_longer(
+    -pid,
+    names_to = &quot;var_cat&quot;, 
+    values_to = &quot;value&quot;
+  ) %&gt;%
+  dplyr::mutate(type = &quot;orig&quot;)
+
+data_tidy_clin_adult_cat &lt;- data_tidy_clin_adult %&gt;%
+  dplyr::select(pid, sex, race, age) %&gt;%
+  tidyr::pivot_longer(
+    -pid,
+    names_to = &quot;var_cat&quot;, 
+    values_to = &quot;value&quot;
+  ) %&gt;%
+  dplyr::mutate(type = &quot;latest&quot;)
+
+sheet_vec &lt;- c(
+  &quot;MAIT cells&quot;, 
+  &quot;NKT cells&quot;, 
+  &quot;CD1b-GMM&quot;, 
+  &quot;gd T cells&quot;, 
+  &quot;CD4 T cells&quot;
+)
+
+# read in Anele&#39;s clinical data
+path_data_raw &lt;- file.path(
+  dir_data_raw, 
+  &quot;2021_09_16,Gela,email-Fig. 2 Frequencies.xlsx&quot;
+)
+data_tidy_clin_adult_anele &lt;- readxl::read_xlsx(
+  file.path(
+    path_data_raw 
+  ), 
+  sheet = &quot;MAIT cells&quot;, 
+  n_max = 25,
+) %&gt;%
+  dplyr::select(`Sample ID`, age:height) %&gt;%
+  dplyr::mutate(
+    age = &quot;adult&quot;,
+  )  %&gt;%
+  dplyr::mutate(`Sample ID` = as.character(`Sample ID`)) %&gt;%
+  dplyr::rename(pid_sheet = `Sample ID`) %&gt;%
+  dplyr::mutate(pid = sheet_to_r_pid[pid_sheet]) %&gt;%
+  dplyr::mutate(sex = as.character(sex), 
+                race = as.character(race), 
+                bcgscar = as.character(bcgscar)) %&gt;%
+  dplyr::mutate(race = ifelse(race == &quot;2&quot;, &quot;3&quot;, race)) %&gt;%
+  dplyr::rename(ppd = PPDmm) %&gt;%
+  dplyr::select(-pid_sheet)</code></pre>
+<pre><code>## New names:
+## * `` -&gt; ...5
+## * `ID (D-BCG)` -&gt; `ID (D-BCG)...6`
+## * Group -&gt; Group...7
+## * Status -&gt; Status...8
+## * Race -&gt; Race...9
+## * ...</code></pre>
+<pre class="r"><code>data_tidy_clin_adult_anele_cat &lt;- data_tidy_clin_adult_anele %&gt;%
+  dplyr::select(pid, sex, race, age) %&gt;%
+  tidyr::pivot_longer(
+    -pid,
+    names_to = &quot;var_cat&quot;, 
+    values_to = &quot;value&quot;
+  ) %&gt;%
+  dplyr::mutate(type = &quot;anele&quot;)
+
+data_tidy_clin_adult_anele_cont &lt;- data_tidy_clin_adult_anele %&gt;%
+  dplyr::select(-c(sex, race, age, bcgscar)) %&gt;%
+  tidyr::pivot_longer(
+    -pid, 
+    names_to = &quot;var&quot;,
+    values_to = &quot;value&quot;
+  ) %&gt;%
+  dplyr::mutate(type = &quot;anele&quot;)</code></pre>
+<p>The tables below display the mismatches between the different datasets read in for the adult clinical data. There are none.</p>
+<pre class="r"><code>tidy_clin_adult_cat_comp &lt;- data_tidy_clin_adult_orig_cat %&gt;%
+  dplyr::bind_rows(data_tidy_clin_adult_cat) %&gt;%
+  dplyr::bind_rows(data_tidy_clin_adult_anele_cat) %&gt;%
+  tidyr::pivot_wider(
+    names_from = &quot;type&quot;, 
+    values_from = &quot;value&quot;
+  ) %&gt;%
+  dplyr::filter(orig != latest | anele != orig)
+tidy_clin_adult_cat_comp</code></pre>
+<pre><code>## # A tibble: 0 x 5
+## # ... with 5 variables: pid &lt;chr&gt;, var_cat &lt;chr&gt;, orig &lt;chr&gt;, latest &lt;chr&gt;,
+## #   anele &lt;chr&gt;</code></pre>
+<pre class="r"><code>data_tidy_clin_adult_orig_cont &lt;- data_tidy_clin_adult_orig %&gt;%
+  dplyr::select(-c(sex, race, age)) %&gt;%
+  tidyr::pivot_longer(
+    -pid, 
+    names_to = &quot;var&quot;,
+    values_to = &quot;value&quot;
+  ) %&gt;%
+  dplyr::mutate(type = &quot;orig&quot;)
+
+data_tidy_clin_adult_cont &lt;- data_tidy_clin_adult %&gt;%
+  dplyr::select(-c(sex, race, age)) %&gt;%
+  tidyr::pivot_longer(
+    -pid, 
+    names_to = &quot;var&quot;,
+    values_to = &quot;value&quot;
+  ) %&gt;%
+  dplyr::mutate(type = &quot;latest&quot;)
+
+tidy_clin_adult_cont_comp &lt;- data_tidy_clin_adult_orig_cont %&gt;%
+  dplyr::bind_rows(data_tidy_clin_adult_cont) %&gt;%
+  dplyr::bind_rows(data_tidy_clin_adult_anele_cont) %&gt;%
+  tidyr::pivot_wider(
+    names_from = &quot;type&quot;, 
+    values_from = &quot;value&quot;
+  ) %&gt;%
+  dplyr::filter(orig != latest | anele != orig)
+tidy_clin_adult_cont_comp</code></pre>
+<pre><code>## # A tibble: 0 x 5
+## # ... with 5 variables: pid &lt;chr&gt;, var &lt;chr&gt;, orig &lt;dbl&gt;, latest &lt;dbl&gt;,
+## #   anele &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<div id="view-3" class="section level4">
+<h4>View</h4>
 <pre class="r"><code>datautils::view_cols(
   data_tidy_clin_adult
 )</code></pre>
 <pre><code>## [1] &quot;pid&quot;
-##  [1] &quot;adult_17&quot; &quot;adult_07&quot; &quot;adult_06&quot; &quot;adult_13&quot; &quot;adult_05&quot; &quot;adult_19&quot;
-##  [7] &quot;adult_08&quot; &quot;adult_04&quot; &quot;adult_24&quot; &quot;adult_21&quot; &quot;adult_11&quot; &quot;adult_01&quot;
-## [13] &quot;adult_12&quot; &quot;adult_03&quot; &quot;adult_02&quot; &quot;adult_15&quot; &quot;adult_20&quot; &quot;adult_18&quot;
-## [19] &quot;adult_23&quot; &quot;adult_25&quot;
+##  [1] &quot;adult_24&quot; &quot;adult_15&quot; &quot;adult_17&quot; &quot;adult_08&quot; &quot;adult_09&quot; &quot;adult_01&quot;
+##  [7] &quot;adult_23&quot; &quot;adult_13&quot; &quot;adult_05&quot; &quot;adult_25&quot; &quot;adult_22&quot; &quot;adult_07&quot;
+## [13] &quot;adult_14&quot; &quot;adult_12&quot; &quot;adult_20&quot; &quot;adult_18&quot; &quot;adult_03&quot; &quot;adult_02&quot;
+## [19] &quot;adult_21&quot; &quot;adult_19&quot;
 ## [1] &quot;5 unique entries not displayed&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;age&quot;
 ## [1] &quot;adult&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;age_in_years&quot;
-## [1] 21 27 34 26 37
+## [1] 24 26 39 36 34
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;sex&quot;
-## [1] &quot;male&quot;   &quot;female&quot;
+## [1] &quot;1&quot; &quot;2&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;race&quot;
-## [1] &quot;african&quot;     &quot;non_african&quot;
+## [1] &quot;1&quot; &quot;2&quot;
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;hgbval&quot;
-## [1] 16.4 14.7 15.3 15.2 12.9
+## [1] 12.1 12.8 13.2 12.9 13.0
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;height&quot;
-## [1] 158 174 178 160 137
+## [1] 178 154 169 166 155
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;weight&quot;
-## [1] 74.1 76.3 71.4 67.9 74.9
+## [1] 63.2 63.7 71.4 67.9 86.7
 ## [1] &quot;_____________________&quot;
 ## [1] &quot;ppd&quot;
-## [1] 24 16 21 40 17
+## [1] 29 23 21 16 19
 ## [1] &quot;_____________________&quot;</code></pre>
 <pre><code>## Warning: Not all unique entries displayed for these non-numeric cols: pid</code></pre>
 <pre class="r"><code>usethis::use_data(data_tidy_clin_adult, 
                   overwrite = TRUE)</code></pre>
 <pre><code>## v Saving &#39;data_tidy_clin_adult&#39; to &#39;data/data_tidy_clin_adult.rda&#39;</code></pre>
 <pre><code>## * Document your data (see &#39;https://r-pkgs.org/data.html&#39;)</code></pre>
+</div>
+</div>
 </div>
 
 

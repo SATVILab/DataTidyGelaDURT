@@ -142,7 +142,8 @@ data_tidy_freq <- purrr::map_df(sheet_vec, function(sheet) {
       bcg = tolower(bcg), 
       pop = long_to_short_pop[pop]
     ) %>%
-    dplyr::select(-age)
+    dplyr::select(-age) %>%
+    dplyr::select(-pid_sheet)
 }) %>%
   tibble::as_tibble()
 ```
@@ -233,7 +234,8 @@ data_tidy_hladr_infant <- purrr::map_df(sheet_vec, function(sheet) {
       bcg = tolower(bcg), 
       pop = long_to_short_pop[pop]
     ) %>%
-    dplyr::select(-age)
+    dplyr::select(-age) %>%
+    dplyr::select(-pid_sheet)
 }) %>%
   tibble::as_tibble()
 ```
@@ -649,7 +651,8 @@ data_tidy_clin_infant_anele <- data_tidy_clin_infant_anele %>%
   dplyr::mutate(
     pid = sheet_to_r_pid_infant[pid_sheet]
   ) %>%
-  dplyr::mutate(age = "infant")
+  dplyr::mutate(age = "infant") %>%
+  dplyr::select(-pid_sheet)
 ```
 
 #### Checks
