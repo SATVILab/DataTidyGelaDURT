@@ -57,6 +57,7 @@ path_data_raw <- file.path(
 )
 
 data_tidy_freq <- purrr::map_df(sheet_vec, function(sheet) {
+  print(sheet)
   data_raw <- readxl::read_xlsx(
     file.path(
       path_data_raw 
@@ -72,14 +73,147 @@ data_tidy_freq <- purrr::map_df(sheet_vec, function(sheet) {
       pid_infant_bcg_no = `ID (D-BCG)...6`, 
       pid_infant_bcg = `ID (D-BCG)...13`, 
       pid_adult = `Sample ID`
+    )
+
+  # align PIDs using Melissa's response data
+  if (sheet == "IFNg+ CD4 T cells") {
+    data_raw_order <- readxl::read_xlsx(
+      file.path(
+        path_data_raw 
+      ), 
+      sheet = "CD4 Tcells"
     ) %>%
-    dplyr::select(
-      pid_infant_bcg_no, 
-      pid_infant_bcg, 
-      pid_adult, 
-      pop,
-      `No BCG`:After
-    ) 
+      dplyr::mutate(
+        pop = "CD4 Tcells"
+      ) 
+    
+    data_raw_order <- data_raw_order %>%
+      dplyr::rename(
+        pid_infant_bcg_no = `ID (D-BCG)...6`, 
+        pid_infant_bcg = `ID (D-BCG)...13`, 
+        pid_adult = `Sample ID`
+      ) %>%
+      dplyr::select(
+        pid_infant_bcg_no, 
+        pid_infant_bcg, 
+        pid_adult, 
+        pop,
+        `No BCG`:After
+      ) 
+    data_raw_order_infant_bcg <- data_raw_order %>%
+      dplyr::select(pid_infant_bcg, pop, `BCG`) %>%
+      dplyr::rename(pid_sheet = pid_infant_bcg) %>%
+      dplyr::mutate(bcg = "bcg") %>%
+      dplyr::rename(freq = `BCG`) %>%
+      dplyr::mutate(age = "infant") %>%
+      dplyr::mutate(row = 25 + seq_len(dplyr::n())) %>%
+      dplyr::mutate(row = ifelse(
+        str_length(row) == 1, 
+        paste0("0", row),
+        row)) %>%
+      dplyr::mutate(pid = paste0(age, "_", row)) %>%
+      dplyr::select(pid, pid_sheet, bcg, age, pop, freq) %>%
+      dplyr::filter(!is.na(freq))
+    
+    sheet_to_r_pid_ifng_bcg_f25 <- setNames(
+      data_raw_order_infant_bcg$pid, 
+      data_raw_order_infant_bcg$pid_sheet
+    )
+    
+    data_raw_infant_bcg_f25 <- data_raw %>%
+      dplyr::select(pid_infant_bcg, pop, `BCG`,
+                    `Race...16`, `Sex...17`, `Age (weeks)...18`) %>%
+      dplyr::rename(
+        race = `Race...16`,
+        sex = `Sex...17`, 
+        visit_age = `Age (weeks)...18`
+      ) %>%
+      dplyr::rename(pid_sheet = pid_infant_bcg) %>%
+      dplyr::mutate(pid_sheet = as.character(pid_sheet)) %>%
+      dplyr::filter(pid_sheet %in% names(sheet_to_r_pid_ifng_bcg_f25)) %>%
+      dplyr::mutate(bcg = "bcg") %>%
+      dplyr::rename(freq = `BCG`) %>%
+      dplyr::mutate(age = "infant") %>%
+      dplyr::mutate(pid = sheet_to_r_pid_ifng_bcg_f25[pid_sheet]) %>%
+      dplyr::select(pid, pid_sheet, bcg, age, race, sex, visit_age, pop, freq) %>%
+      dplyr::filter(!is.na(freq))
+    
+    data_raw_infant_bcg_s25 <- data_raw %>%
+      dplyr::select(pid_infant_bcg, pop, `BCG`,
+                    `Race...16`, `Sex...17`, `Age (weeks)...18`) %>%
+      dplyr::rename(
+        race = `Race...16`,
+        sex = `Sex...17`, 
+        visit_age = `Age (weeks)...18`
+      ) %>%
+      dplyr::rename(pid_sheet = pid_infant_bcg) %>%
+      dplyr::mutate(pid_sheet = as.character(pid_sheet)) %>%
+      dplyr::filter(!pid_sheet %in% names(sheet_to_r_pid_ifng_bcg_f25)) %>%
+      dplyr::mutate(bcg = "bcg") %>%
+      dplyr::rename(freq = `BCG`) %>%
+      dplyr::mutate(age = "infant") %>%
+      dplyr::mutate(row = 50 + seq_len(dplyr::n())) %>%
+      dplyr::mutate(row = ifelse(
+        str_length(row) == 1, 
+        paste0("0", row),
+        row)) %>%
+      dplyr::mutate(pid = paste0(age, "_", row)) %>%
+      dplyr::select(pid, pid_sheet, bcg, age, race, sex, visit_age, pop, freq) %>%
+      dplyr::filter(!is.na(freq))
+    
+    data_raw_infant_bcg <- data_raw_infant_bcg_f25 %>%
+      dplyr::bind_rows(data_raw_infant_bcg_s25)
+    
+    pid_to_race_inf_bcg <- setNames(
+      data_raw_infant_bcg$race, 
+      data_raw_infant_bcg$pid
+    )
+    pid_to_sex_inf_bcg <- setNames(
+      data_raw_infant_bcg$sex, 
+      data_raw_infant_bcg$pid
+    )
+    pid_to_visit_age_inf_bcg <- setNames(
+      data_raw_infant_bcg$visit_age, 
+      data_raw_infant_bcg$pid
+    )
+    
+    assign(
+      x = "pid_to_race_inf_bcg", 
+      value = pid_to_race_inf_bcg, 
+      envir = rlang::caller_env(n = 3)
+    )
+    assign(
+      x = "pid_to_sex_inf_bcg", 
+      value = pid_to_sex_inf_bcg, 
+      envir = rlang::caller_env(n = 3)
+    )
+    assign(
+      x = "pid_to_visit_age_inf_bcg", 
+      value = pid_to_visit_age_inf_bcg, 
+      envir = rlang::caller_env(n = 3)
+    )
+
+    
+    data_raw_infant_bcg <- data_raw_infant_bcg %>%
+      dplyr::select(-c(visit_age, race, sex))
+    
+  } else {
+    data_raw_infant_bcg <- data_raw %>%
+      dplyr::select(pid_infant_bcg, pop, `BCG`) %>%
+      dplyr::rename(pid_sheet = pid_infant_bcg) %>%
+      dplyr::mutate(bcg = "bcg") %>%
+      dplyr::rename(freq = `BCG`) %>%
+      dplyr::mutate(age = "infant") %>%
+      dplyr::mutate(row = 25 + seq_len(dplyr::n())) %>%
+      dplyr::mutate(row = ifelse(
+        str_length(row) == 1, 
+        paste0("0", row),
+        row)) %>%
+      dplyr::mutate(pid = paste0(age, "_", row)) %>%
+      dplyr::select(pid, pid_sheet, bcg, age, pop, freq) %>%
+      dplyr::filter(!is.na(freq)) %>%
+    dplyr::mutate(pid_sheet = as.character(pid_sheet))
+  }
   
   data_raw_infant_bcg_no <- data_raw %>%
     dplyr::select(pid_infant_bcg_no, pop, `No BCG`) %>%
@@ -94,23 +228,9 @@ data_tidy_freq <- purrr::map_df(sheet_vec, function(sheet) {
       row)) %>%
     dplyr::mutate(pid = paste0(age, "_", row)) %>%
     dplyr::select(pid, pid_sheet, bcg, age, pop, freq) %>%
-    dplyr::filter(!is.na(freq))
+    dplyr::filter(!is.na(freq)) %>%
+    dplyr::mutate(pid_sheet = as.character(pid_sheet))
   
-  data_raw_infant_bcg <- data_raw %>%
-    dplyr::select(pid_infant_bcg, pop, `BCG`) %>%
-    dplyr::rename(pid_sheet = pid_infant_bcg) %>%
-    dplyr::mutate(bcg = "bcg") %>%
-    dplyr::rename(freq = `BCG`) %>%
-    dplyr::mutate(age = "infant") %>%
-    dplyr::mutate(row = 25 + seq_len(dplyr::n())) %>%
-    dplyr::mutate(row = ifelse(
-      str_length(row) == 1, 
-      paste0("0", row),
-      row)) %>%
-    dplyr::mutate(pid = paste0(age, "_", row)) %>%
-    dplyr::select(pid, pid_sheet, bcg, age, pop, freq) %>%
-    dplyr::filter(!is.na(freq))
-
   data_raw_adult <- data_raw %>%
     dplyr::select(pid_adult, pop, Before, After) %>%
     dplyr::rename(pid_sheet = pid_adult) %>%
@@ -129,9 +249,10 @@ data_tidy_freq <- purrr::map_df(sheet_vec, function(sheet) {
     ) %>%
     dplyr::mutate(bcg = tolower(bcg)) %>%
     dplyr::select(pid, pid_sheet, bcg, age, pop, freq) %>%
-    dplyr::filter(!is.na(freq))
+    dplyr::filter(!is.na(freq)) %>%
+    dplyr::mutate(pid_sheet = as.character(pid_sheet))
   
-  data_raw_infant_bcg_no %>%
+  data_out <- data_raw_infant_bcg_no %>%
     dplyr::bind_rows(
       data_raw_infant_bcg
     ) %>%
@@ -143,7 +264,29 @@ data_tidy_freq <- purrr::map_df(sheet_vec, function(sheet) {
       pop = long_to_short_pop[pop]
     ) %>%
     dplyr::select(-age) %>%
-    dplyr::select(-pid_sheet)
+    dplyr::mutate(
+      pid = setNames(pid, NULL), 
+      bcg = setNames(bcg, NULL), 
+      pop = setNames(pop, NULL), 
+      freq = setNames(freq, NULL))
+  
+  if (sheet == "IFNg+ CD4 T cells") {
+    
+    data_out_infant <- data_out %>%
+      dplyr::filter(grepl("infant", pid))
+    
+    sheet_to_r_pid_infant_ifng <- setNames(
+      setNames(data_out_infant$pid, NULL),
+      setNames(data_out_infant$pid_sheet, NULL)
+    )
+    assign(
+      x = "sheet_to_r_pid_infant_ifng", 
+      value = sheet_to_r_pid_infant_ifng, 
+      envir = rlang::caller_env(n = 3)
+    )
+  }
+  data_out
+
 }) %>%
   tibble::as_tibble()
 ```
@@ -226,15 +369,59 @@ data_tidy_hladr_infant <- purrr::map_df(sheet_vec, function(sheet) {
     dplyr::select(pid, pid_sheet, bcg, age, pop, hladr_mfi) %>%
     dplyr::filter(!is.na(hladr_mfi))
   
-  data_raw_infant_bcg_no %>%
+  if(sheet == "CD4+ T cells") {
+    data_raw <- readxl::read_xlsx(
+      file.path(
+        path_data_raw 
+      ), 
+      sheet = sheet
+    ) %>%
+      dplyr::mutate(
+        pop = "cd4_ifng"
+      )
+    if(nrow(data_raw) == 0) print(sheet)
+  
+    cn_vec <- colnames(data_raw)
+    id_vec_ind <- which(grepl("ID \\(D-BCG\\)", cn_vec))
+    data_raw <- data_raw[, c(18, 3, id_vec_ind[2])]
+    colnames(data_raw) <- c("pop", "hladr_mfi", "pid_sheet")
+    
+    data_raw_infant_bcg_cd4_ifng <- data_raw %>%
+      dplyr::select(pid_sheet, pop, hladr_mfi) %>%
+      dplyr::mutate(bcg = "bcg") %>%
+      dplyr::mutate(age = "infant") %>%
+      dplyr::mutate(row = seq_len(dplyr::n()) + 25) %>%
+      dplyr::mutate(row = ifelse(
+        str_length(row) == 1, 
+        paste0("0", row),
+        row)) %>%
+      dplyr::mutate(pid = paste0(age, "_", row)) %>%
+      dplyr::select(pid, pid_sheet, bcg, age, pop, hladr_mfi) %>%
+      dplyr::filter(!is.na(hladr_mfi))
+
+  }
+  
+  data_out <- data_raw_infant_bcg_no %>%
     dplyr::bind_rows(
       data_raw_infant_bcg
     ) %>%
     dplyr::mutate(
-      bcg = tolower(bcg), 
       pop = long_to_short_pop[pop]
+    )
+  if (sheet == "CD4+ T cells") {
+    data_out <- data_out %>%
+      dplyr::bind_rows(
+        data_raw_infant_bcg_cd4_ifng
+      )
+  }
+  data_out %>%
+    dplyr::mutate(
+      bcg = tolower(bcg)
     ) %>%
     dplyr::select(-age) %>%
+    dplyr::mutate(
+      pid = sheet_to_r_pid_infant_ifng[pid_sheet]
+    ) %>%
     dplyr::select(-pid_sheet)
 }) %>%
   tibble::as_tibble()
@@ -575,8 +762,7 @@ r_to_sheet_pid_infant <- setNames(data_tidy_clin_infant_lab$pid_sheet,
 sheet_to_r_pid_infant <- setNames(names(r_to_sheet_pid_infant), 
                                   r_to_sheet_pid_infant)
 
-data_tidy_clin_infant <- data_tidy_clin_infant %>%
-  dplyr::select(-pid_sheet)
+data_tidy_clin_infant <- data_tidy_clin_infant 
 
 data_tidy_clin_infant <- data_tidy_clin_infant %>%
   dplyr::rename(race = ethnicity)
@@ -627,7 +813,9 @@ data_tidy_clin_infant_bcg_anele <- data_tidy_clin_infant_raw_anele %>%
                 race = `Race...16`,
                 sex = `Sex...17`,
                 visit_age = `Age (weeks)...18`) %>%
-  dplyr::mutate(bcg = "bcg")
+  dplyr::mutate(bcg = "bcg") %>%
+  dplyr::mutate(pid_r_anele = paste0("infant_", 26:75))
+
 data_tidy_clin_infant_bcg_no_anele <- data_tidy_clin_infant_raw_anele %>%
   dplyr::select(`ID (D-BCG)...6`, `Race...9`:`Age (weeks)...11`) %>%
   dplyr::rename(pid_sheet = `ID (D-BCG)...6`, 
@@ -635,10 +823,17 @@ data_tidy_clin_infant_bcg_no_anele <- data_tidy_clin_infant_raw_anele %>%
                 sex = `Sex...10`,
                 visit_age = `Age (weeks)...11`) %>%
   dplyr::mutate(bcg = "no bcg") %>%
-  dplyr::filter(!is.na(pid_sheet))
+  dplyr::filter(!is.na(pid_sheet)) %>%
+  dplyr::mutate(row = seq_len(dplyr::n())) %>%
+  dplyr::mutate(row = ifelse(
+      str_length(row) == 1, 
+      paste0("0", row),
+      row)) %>%
+  dplyr::mutate(pid_r_anele = paste0("infant_", row)) %>%
+  dplyr::select(-row)
 data_tidy_clin_infant_anele <- data_tidy_clin_infant_bcg_anele %>%
   dplyr::bind_rows(data_tidy_clin_infant_bcg_no_anele) %>%
-  dplyr::mutate(pid_sheet = as.character(pid_sheet))
+  dplyr::mutate(pid_sheet = as.character(pid_sheet)) 
 
 chr_to_num_sex_infant_anele <- c("F" = "2", "M" = "1")
 chr_to_num_race_infant_anele <- c("black" = "1", "coloured" = "2")
@@ -647,48 +842,45 @@ data_tidy_clin_infant_anele <- data_tidy_clin_infant_anele %>%
   dplyr::mutate(
     race = chr_to_num_race_infant_anele[race], 
     sex = chr_to_num_sex_infant_anele[sex]
-  ) %>%
-  dplyr::mutate(
-    pid = sheet_to_r_pid_infant[pid_sheet]
-  ) %>%
-  dplyr::mutate(age = "infant") %>%
-  dplyr::select(-pid_sheet)
+  )
+
+sheet_to_r_pid_infant_anele <- setNames(data_tidy_clin_infant_anele$pid_r_anele, 
+                                        data_tidy_clin_infant_anele$pid_sheet)
 ```
 
-#### Checks
-
+Based on below, it appears that the rows are ordered differently between `Copy of delayed BCG samples for Anele_.xlsx` and the immunological data, e.g. `2021_09_16,Gela,email-Fig. 2 Frequencies.xlsx` spreadsheeet `IFNg+ CD4 T cells`. 
 ```{r }
-testthat::expect_identical(nrow(data_tidy_clin_infant_anele), 75L)
-testthat::expect_identical(sum(data_tidy_clin_infant_anele$bcg == "bcg"), 50L)
-testthat::expect_identical(unique(data_tidy_clin_infant_anele$race),
-                           c("2", "1"))
-testthat::expect_identical(unique(data_tidy_clin_infant_anele$sex),
-                           c("2", "1"))
-testthat::expect_identical(unique(data_tidy_clin_infant_anele$bcg),
-                           c("bcg", "no bcg"))
+sheet_to_r_pid_infant_anele_check <- sheet_to_r_pid_infant_anele[
+  as.numeric(gsub("infant_", "", sheet_to_r_pid_infant_anele)) <= 50
+]
+
+purrr::map(seq_along(sheet_to_r_pid_infant), function(i) {
+  nm <- names(sheet_to_r_pid_infant)[i]
+  val <- sheet_to_r_pid_infant[i]
+  setNames(sheet_to_r_pid_infant_anele[[nm]] != val, NULL)
+}) %>%
+  all()
 ```
 
-#### View
+The datasets were given later than `Copy of delayed BCG samples for Anele_.xlsx`, and have the pids joined on for all infants, and so they're presumed to be correct. 
 
-```{r }
-datautils::view_cols(
-  data_tidy_clin_infant_anele
-)
-```
-
-#### Joining infant clinical datasets
-
-##### Checks
-
-We join the above two datasets on `pid`, `race` and `bcg`. Since each `pid` between the datasets has the same `race` and `bcg` entry, we know that the joining is correct. 
-
+This means that the R pids constructed based on the ordering of the infants are incorrect for `data_tidy_clin_infant` thus far, and so `sheet_to_r_pid_infant` is also incorrect. We therefore use the labelling vector `sheet_to_r_pid_infant_anele` to get correct R pids in `data_tidy_clin_infant`. 
 ```{r }
 data_tidy_clin_infant <- data_tidy_clin_infant %>%
+  dplyr::mutate(pid = sheet_to_r_pid_infant_anele[pid_sheet])
+
+data_tidy_clin_infant <- data_tidy_clin_infant_anele %>%
+  dplyr::rename(pid = pid_r_anele) %>%
   dplyr::full_join(
-    data_tidy_clin_infant_anele, 
-    by = c("pid", "race", "bcg", "age")
-  )
+    data_tidy_clin_infant, 
+    by = c("pid", "pid_sheet", "race", "bcg")
+  ) %>%
+  dplyr::arrange(pid) %>%
+  dplyr::select(pid, pid_sheet, age, bcg, race, sex,
+                visit_age, gest_age:head_circ, everything()) 
 ```
+
+The above seems correct when checked manually against `Copy of delayed BCG samples for Anele_.xlsx` and `2021_09_16,Gela,email-Fig. 2 Frequencies.xlsx` spreadsheeet `IFNg+ CD4 T cells`.
 
 ```{r }
 testthat::expect_identical(nrow(data_tidy_clin_infant), 75L)
@@ -697,8 +889,54 @@ testthat::expect_identical(sort(unique(data_tidy_clin_infant$race)),
                            c("1", "2"))
 testthat::expect_identical(sort(unique(data_tidy_clin_infant$sex)),
                            c("1", "2"))
-testthat::expect_identical(unique(data_tidy_clin_infant$bcg),
+testthat::expect_identical(sort(unique(data_tidy_clin_infant$bcg)),
                            c("bcg", "no bcg"))
+```
+
+##### Set sex and race back to character entries
+
+Set race and gender levels to descriptive words rather than numbers.
+
+```{r }
+num_to_chr_race_infant <- setNames(names(chr_to_num_race_infant), 
+                                   chr_to_num_race_infant)
+short_to_long_sex_infant_anele <- c("F" = "female", "M" = "male")
+num_to_chr_sex_infant <- setNames(short_to_long_sex_infant_anele[names(chr_to_num_sex_infant_anele)],
+                                  chr_to_num_sex_infant_anele)
+data_tidy_clin_infant <- data_tidy_clin_infant %>%
+  dplyr::mutate(
+    sex = num_to_chr_sex_infant[sex],
+    race = num_to_chr_race_infant[race]
+  )
+```
+
+##### Correct race, sex and visit_age for BCG-vaccinated infants
+
+```{r }
+data_tidy_clin_infant_bcg <- data_tidy_clin_infant %>%
+  dplyr::filter(bcg == "bcg")
+data_tidy_clin_infant_bcg <- data_tidy_clin_infant_bcg %>%
+  dplyr::mutate(
+    pid = sheet_to_r_pid_infant_ifng[pid_sheet], 
+    race = pid_to_race_inf_bcg[pid], 
+    sex = pid_to_sex_inf_bcg[pid], 
+    sex = short_to_long_sex_infant_anele[sex],
+    visit_age = pid_to_visit_age_inf_bcg[pid], 
+  ) 
+data_tidy_clin_infant <- data_tidy_clin_infant %>%
+  dplyr::filter(bcg == "no bcg") %>%
+  dplyr::bind_rows(
+    data_tidy_clin_infant_bcg
+  )
+```
+
+##### Final adjustments
+
+Place categorical variables first, and then continuous variables. 
+```{r }
+data_tidy_clin_infant <- data_tidy_clin_infant %>%
+  dplyr::select(pid, bcg, age, race, sex, everything()) %>%
+  dplyr::select(-pid_sheet)
 ```
 
 ##### View
@@ -1000,6 +1238,27 @@ tidy_clin_adult_cont_comp <- data_tidy_clin_adult_orig_cont %>%
   ) %>%
   dplyr::filter(orig != latest | anele != orig)
 tidy_clin_adult_cont_comp
+```
+
+#### Final adjustments
+
+Set race and gender levels to descriptive words rather than numbers.
+
+```{r }
+data_tidy_clin_adult <- data_tidy_clin_adult %>%
+  dplyr::mutate(
+    sex = num_to_chr_sex_adult[sex],
+    race = purrr::map_chr(race, function(x) {
+      if(x == "2") return("non_black")
+      "black"
+    })
+  )
+```
+
+Place categorial variables first, and then continuous variables. 
+```{r }
+data_tidy_clin_adult <- data_tidy_clin_adult %>%
+  dplyr::select(pid, age, sex, race, everything())
 ```
 
 #### View
