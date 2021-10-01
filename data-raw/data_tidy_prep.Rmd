@@ -606,6 +606,18 @@ data_tidy_mem <- purrr::map_df(sheet_vec, function(sheet) {
     dplyr::select(pid, age, bcg, pop, pop_sub, freq)
 }) %>%
   tibble::as_tibble()
+
+data_tidy_mem <- data_tidy_mem %>%
+  dplyr::mutate(
+    pop_sub = purrr::map_chr(pop_sub, function(x) {
+      switch(
+        x, 
+        "CD45RA- CCR7+" = "CD45RA-CCR7+", 
+        "CCR7+CD45RA+" = "CD45RA+CCR7+", 
+        x
+      )
+    })
+  )
 ```
 
 ```{r }
@@ -643,7 +655,7 @@ data_tidy_mem_long <- purrr::map_df(sheet_vec, function(sheet) {
     sheet = sheet, 
     n_max = 25,
   ) %>%
-    dplyr::select(`CCR7+CD45RA+`:`CCR7+CD45RA-`, `Sample ID`) %>%
+    dplyr::select(`CCR7+CD45RA+`:`CCR7-CD45RA-`, `Sample ID`) %>%
     dplyr::mutate(
       pop = sheet,
       age = "adult",
