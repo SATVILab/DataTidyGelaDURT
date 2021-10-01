@@ -613,6 +613,7 @@ data_tidy_mem <- data_tidy_mem %>%
       switch(
         x, 
         "CD45RA- CCR7+" = "CD45RA-CCR7+", 
+        "CD45RA- CCR7+" = "CD45RA-CCR7+", 
         "CCR7+CD45RA+" = "CD45RA+CCR7+", 
         x
       )
@@ -689,6 +690,20 @@ data_tidy_mem_long <- purrr::map_df(sheet_vec, function(sheet) {
     )
 }) %>%
   tibble::as_tibble()
+
+data_tidy_mem_long <- data_tidy_mem_long %>%
+  dplyr::mutate(
+    pop_sub = purrr::map_chr(pop_sub, function(x) {
+      switch(
+        x, 
+        "CCR7+CD45RA-" = "CD45RA-CCR7+", 
+        "CCR7-CD45RA-" = "CD45RA-CCR7-", 
+        "CCR7+CD45RA+" = "CD45RA+CCR7+", 
+        "CCR7-CD45RA+" = "CD45RA+CCR7-",
+        x
+      )
+    })
+  )
 
 ```
 
