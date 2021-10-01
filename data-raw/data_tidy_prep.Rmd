@@ -658,7 +658,7 @@ data_tidy_mem_long <- purrr::map_df(sheet_vec, function(sheet) {
     ) %>%
     dplyr::rename(pid_sheet = `Sample ID`) %>%
     dplyr::select(-c(row, age))
-  data_raw %>%
+  data_raw <- data_raw %>%
     tidyr::pivot_longer(
       -c(pid, pid_sheet, pop), 
       names_to = "pop_sub", 
@@ -669,6 +669,11 @@ data_tidy_mem_long <- purrr::map_df(sheet_vec, function(sheet) {
     ) %>%
     dplyr::mutate(
       pop = long_to_short_pop[pop]
+    )
+  data_raw %>%
+    dplyr::mutate(
+      freq = gsub(" \\%$", "", freq) %>%
+        as.numeric()
     )
 }) %>%
   tibble::as_tibble()
