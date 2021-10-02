@@ -6,15 +6,15 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
-```{r }
+```{r , include = FALSE}
 library(magrittr)
 library(stringr)
 ```
 
-```{r }
+```{r , include = FALSE}
 unlink(here::here("data"))
 dir_data_raw <- file.path(
   dirname(here::here()), 
@@ -36,7 +36,7 @@ long_to_short_pop <- c(
 
 ## Lineage frequencies (Figure 2)
 
-```{r }
+```{r , include = FALSE}
 sheet_vec <- c(
   "MAIT cells", 
   "NKT cells", 
@@ -297,14 +297,14 @@ datautils::view_cols(
 )
 ```
 
-```{r }
+```{r , include = FALSE}
 usethis::use_data(data_tidy_freq, 
                   overwrite = TRUE)
 ```
 
 ## HLADR MFI: Infants (Figure 3)
 
-```{r }
+```{r , include = FALSE}
 sheet_vec <- c(
   "CD4+ T cells",
   "MAIT cells", 
@@ -434,14 +434,14 @@ datautils::view_cols(
 )
 ```
 
-```{r }
+```{r , include = FALSE}
 usethis::use_data(data_tidy_hladr_infant, 
                   overwrite = TRUE)
 ```
 
 ## HLADR MFI: Adults (Figure 4)
 
-```{r }
+```{r , include = FALSE}
 sheet_vec <- c(
   "MAIT cells", 
   "NKT cells", 
@@ -502,144 +502,14 @@ datautils::view_cols(
 )
 ```
 
-```{r }
+```{r , include = FALSE}
 usethis::use_data(data_tidy_hladr_adult, 
                   overwrite = TRUE)
 ```
 
 ## Memory profile (Figure 6)
 
-### Infants
-
-```{r }                           
-sheet_vec <- c(
-  "MAIT cells", 
-  "NKT cells", 
-  "gd T cells", 
-  "CD4 T cells"
-)
-path_data_raw <- file.path(
-  dir_data_raw, 
-  "2021_09_16,Gela,email-Figure 5- Memory profile.xlsx"
-)
-data_tidy_mem_infant <- purrr::map_df(sheet_vec, function(sheet) {
-  data_raw_grp <- readxl::read_xlsx(
-    file.path(
-      path_data_raw 
-    ), 
-    sheet = sheet, 
-    n_max = 0
-  )
-  data_raw_pop <- readxl::read_xlsx(
-    file.path(
-      path_data_raw 
-    ), 
-    sheet = sheet, 
-    n_max = 1,
-    skip = 0
-  )
-  info_tbl <- data_raw_pop %>%
-    dplyr::mutate(id = 1) %>%
-    tidyr::pivot_longer(
-      -id, 
-      names_to = "grp", 
-      values_to = "pop"
-    ) %>%
-    dplyr::select(-id) %>%
-    dplyr::filter(!grepl("^\\.\\..\\d+$", grp)) %>%
-    dplyr::mutate(grp = stringr::str_remove_all(grp, "\\.+\\d*$"))
-  pop_vec <- info_tbl$pop[!is.na(info_tbl$pop)]
-  info_tbl[seq(2, nrow(info_tbl), by = 3), "pop"] <- pop_vec 
-  info_tbl[seq(3, nrow(info_tbl), by = 3), "pop"] <- pop_vec 
-  cn_vec <- paste0(info_tbl$grp, "_", info_tbl$pop)
-  
-  data_raw <- readxl::read_xlsx(
-    file.path(
-      path_data_raw 
-    ), 
-    sheet = sheet, 
-    col_names = FALSE, 
-    skip = 2,
-    n_max = 25
-  )
-  data_raw <- data_raw[
-    , purrr::map_lgl(data_raw, function(x) !all(is.na(x)))
-    ]
-  colnames(data_raw) <- cn_vec
-  
-  data_raw %>% 
-    dplyr::mutate(
-      row = seq_len(dplyr::n())
-    ) %>%
-    tidyr::pivot_longer(
-      - row, 
-      names_to = "grp", 
-      values_to = "freq"
-    ) %>%
-    tidyr::separate(
-      col = "grp", 
-      into = c("grp_2", "pop"), 
-      sep = "_"
-    ) %>%
-    dplyr::mutate(
-      age = ifelse(grp_2 == "Adult", "adult", "infant"), 
-      bcg = ifelse(grp_2 == "Adult", "day_365", tolower(grp_2))
-    ) %>%
-    dplyr::select(-grp_2) %>%
-    dplyr::group_by(age, bcg) %>%
-    dplyr::mutate(
-      row = 1:25 + ifelse(bcg == "bcg", 25, 0), 
-      row = ifelse(age == "adult", 1:25, row),
-      row = as.character(row),
-      row = ifelse(
-        stringr::str_length(row) == 1, 
-        paste0("0", row),
-        row
-        ),
-      pid = paste0(age, "_", row)
-    ) %>%
-    dplyr::ungroup() %>%
-    dplyr::rename(
-      pop_sub = pop
-    ) %>%
-    dplyr::mutate(
-      pop = long_to_short_pop[sheet]
-    ) %>%
-    dplyr::select(pid, age, bcg, pop, pop_sub, freq)
-}) %>%
-  tibble::as_tibble() %>%
-  dplyr::filter(grepl("infant", pid))
-
-data_tidy_mem_infant <- data_tidy_mem_infant %>%
-  dplyr::mutate(
-    pop_sub = purrr::map_chr(pop_sub, function(x) {
-      switch(
-        x, 
-        "CD45RA- CCR7+" = "CD45RA-CCR7+", 
-        "CD45RA- CCR7+" = "CD45RA-CCR7+", 
-        "CCR7+CD45RA+" = "CD45RA+CCR7+", 
-        x
-      )
-    })
-  )
-```
-
-```{r }
-datautils::view_cols(
-  data_tidy_mem_infant
-)
-```
-
-```{r }
-usethis::use_data(
-  data_tidy_mem_infant, 
-  overwrite = TRUE
-  )
-```
-
-### Adults
-
-```{r }                           
+```{r , include = FALSE}                           
 sheet_vec <- c(
   "MAIT cells", 
   "NKT cells", 
@@ -650,7 +520,7 @@ path_data_raw <- file.path(
   dir_data_raw, 
   "2021_10_02,Gela,email-Figure 6- Memory profile.xlsx"
 )
-data_tidy_mem_adult <- purrr::map_df(sheet_vec, function(sheet) {
+data_tidy_mem <- purrr::map_df(sheet_vec, function(sheet) {
   data_raw <- readxl::read_xlsx(
     file.path(
       path_data_raw 
@@ -688,7 +558,7 @@ data_tidy_mem_adult <- purrr::map_df(sheet_vec, function(sheet) {
   colnames(data_raw) <- cn_vec
   
   cn_vec_sel <- cn_vec[
-    grepl("^Adult", cn_vec)  
+    grepl("^Adult|^No|^BCG", cn_vec)  
   ]
   data_raw <- data_raw[,cn_vec_sel]
   
@@ -702,38 +572,47 @@ data_tidy_mem_adult <- purrr::map_df(sheet_vec, function(sheet) {
         row
         ),
     ) %>%
-    dplyr::mutate(pid = paste0("adult_", row)) %>%
-    dplyr::select(-row) %>%
+    #dplyr::mutate(pid = paste0("adult_", row)) %>%
+    #::select(-row) %>%
     tidyr::pivot_longer(
-      -pid, 
+      -row, 
       names_to = "var", 
       values_to = "freq"
     ) %>%
     dplyr::mutate(
-      age =  "adult"
+      age =  ifelse(grepl("^Adult", var), "adult", ""),
+      age =  ifelse(grepl("^No_BCG|^BCG", var), "infant", age),
+    ) %>%
+    dplyr::mutate(
+      pid = paste0(age, "_", row)
     ) %>%
     dplyr::mutate(
       pop_sub = stringr::str_sub(stringr::str_remove_all(var, "\\s"),
                                  start = - 12)
     ) %>%
     dplyr::mutate(
-      day = stringr::str_remove_all(var, "Adult_Day_"), 
-      day = stringr::str_remove_all(day, "CCR7") %>%
+      grp = stringr::str_remove_all(var, "Adult_Day_"), 
+      grp = stringr::str_remove_all(grp, "CCR7") %>%
         stringr::str_remove_all("CD45RA") %>%
         stringr::str_remove_all("\\+|\\-") %>%
         stringr::str_remove_all("\\.\\.\\.\\d+"), 
-      day = as.numeric(day)
+      grp = as.numeric(grp)
+    ) %>%
+    dplyr::mutate(
+      grp = ifelse(age == "infant" & grepl("^No BCG", var), 
+                   "no bcg", grp),
+      grp = ifelse(age == "infant" & grepl("^BCG", var), 
+                   "bcg", grp)
     ) %>%
     dplyr::select(-var) %>%
     dplyr::mutate(
       pop = long_to_short_pop[sheet]
     ) %>%
-    dplyr::select(pid, age, day, pop, pop_sub, freq)
+    dplyr::select(pid, age, grp, pop, pop_sub, freq)
 }) %>%
-  tibble::as_tibble() %>%
-  dplyr::filter(grepl("adult", pid))
+  tibble::as_tibble() 
 
-data_tidy_mem_adult <- data_tidy_mem_adult %>%
+data_tidy_mem <- data_tidy_mem %>%
   dplyr::mutate(
     pop_sub = purrr::map_chr(pop_sub, function(x) {
       switch(
@@ -747,13 +626,13 @@ data_tidy_mem_adult <- data_tidy_mem_adult %>%
 
 ```{r }
 datautils::view_cols(
-  data_tidy_mem_adult
+  data_tidy_mem
 )
 ```
 
-```{r }
+```{r , include = FALSE}
 usethis::use_data(
-  data_tidy_mem_adult, 
+  data_tidy_mem, 
   overwrite = TRUE
   )
 ```
@@ -764,7 +643,7 @@ usethis::use_data(
 
 We read in the clinical data from `Copy of delayed BCG samples for Anele_.xlsx`. This was the spreadsheet originally provided to get the clinical data from. However, it did not have the gender for the infants and did not have the PIDs for the extra twenty-five infants who were given BCG at birth and had their CD4 T cell IFN$\gamma$ frequency measured. It did, however, provide the following extra variables: gestational age, weight, length and head circumference. In addition, it provides a check on the data read in from the other spreadsheet giving clinical data regarding the infants. 
 
-```{r }
+```{r , include = FALSE}
 path_data_raw <- file.path(
   dir_data_raw, 
   "Copy of delayed BCG samples for Anele_.xlsx"
@@ -867,7 +746,7 @@ datautils::view_cols(
 
 We read in the clinical data from `2021_09_16,Gela,email-Fig. 2 Frequencies.xlsx`. This was provided after realising that the previous infant clinical data spreadsheet did not have the PIDs for all the infants and did not provide the key potential confounder, sex. 
 
-```{r }
+```{r , include = FALSE}
 path_data_raw <- file.path(
   dir_data_raw, 
   "2021_09_16,Gela,email-Fig. 2 Frequencies.xlsx"
@@ -935,7 +814,7 @@ purrr::map(seq_along(sheet_to_r_pid_infant), function(i) {
 The datasets were given later than `Copy of delayed BCG samples for Anele_.xlsx`, and have the pids joined on for all infants, and so they're presumed to be correct. 
 
 This means that the R pids constructed based on the ordering of the infants are incorrect for `data_tidy_clin_infant` thus far, and so `sheet_to_r_pid_infant` is also incorrect. We therefore use the labelling vector `sheet_to_r_pid_infant_anele` to get correct R pids in `data_tidy_clin_infant`. 
-```{r }
+```{r , include = FALSE}
 data_tidy_clin_infant <- data_tidy_clin_infant %>%
   dplyr::mutate(pid = sheet_to_r_pid_infant_anele[pid_sheet])
 
@@ -967,7 +846,7 @@ testthat::expect_identical(sort(unique(data_tidy_clin_infant$bcg)),
 
 Set race and gender levels to descriptive words rather than numbers.
 
-```{r }
+```{r , include = FALSE}
 num_to_chr_race_infant <- setNames(names(chr_to_num_race_infant), 
                                    chr_to_num_race_infant)
 short_to_long_sex_infant_anele <- c("F" = "female", "M" = "male")
@@ -982,7 +861,7 @@ data_tidy_clin_infant <- data_tidy_clin_infant %>%
 
 ##### Correct race, sex and visit_age for BCG-vaccinated infants
 
-```{r }
+```{r , include = FALSE}
 data_tidy_clin_infant_bcg <- data_tidy_clin_infant %>%
   dplyr::filter(bcg == "bcg")
 data_tidy_clin_infant_bcg <- data_tidy_clin_infant_bcg %>%
@@ -1003,7 +882,7 @@ data_tidy_clin_infant <- data_tidy_clin_infant %>%
 ##### Final adjustments
 
 Place categorical variables first, and then continuous variables. 
-```{r }
+```{r , include = FALSE}
 data_tidy_clin_infant <- data_tidy_clin_infant %>%
   dplyr::select(pid, bcg, age, race, sex, everything()) %>%
   dplyr::select(-pid_sheet)
@@ -1017,7 +896,7 @@ datautils::view_cols(
 )
 ```
 
-```{r }
+```{r , include = FALSE}
 usethis::use_data(data_tidy_clin_infant, 
                   overwrite = TRUE)
 ```
@@ -1028,7 +907,7 @@ usethis::use_data(data_tidy_clin_infant,
 
 We read in the clinical data from `TBRU samples for Anele .xlsx`. This was the spreadsheet originally provided to give clinical data for the adults. We also compare it to the same read read in using different code, as well as another spreadsheet, to check that we are correct. 
 
-```{r }
+```{r , include = FALSE}
 path_data_raw <- file.path(
   dir_data_raw, 
   "TBRU samples for Anele .xlsx"
@@ -1131,7 +1010,7 @@ testthat::expect_identical(sort(unique(data_tidy_clin_adult$sex)),
 
 ##### Comparison of clinical data with previous development and manual
 
-```{r }
+```{r , include = FALSE}
 path_data_raw <- file.path(
   dir_data_raw, 
   "TBRU samples for Anele .xlsx"
@@ -1190,7 +1069,7 @@ data_tidy_clin_adult_orig <- data_tidy_clin_adult_orig %>%
   dplyr::select(-bcgscar)
 ```
 
-```{r }
+```{r , include = FALSE}
 data_tidy_clin_adult_orig_cat <- data_tidy_clin_adult_orig %>%
   dplyr::select(pid, sex, race, age) %>%
   dplyr::mutate(sex = setNames(names(num_to_chr_sex_adult), 
@@ -1314,7 +1193,7 @@ tidy_clin_adult_cont_comp
 
 Set race and gender levels to descriptive words rather than numbers.
 
-```{r }
+```{r , include = FALSE}
 data_tidy_clin_adult <- data_tidy_clin_adult %>%
   dplyr::mutate(
     sex = num_to_chr_sex_adult[sex],
@@ -1326,7 +1205,7 @@ data_tidy_clin_adult <- data_tidy_clin_adult %>%
 ```
 
 Place categorial variables first, and then continuous variables. 
-```{r }
+```{r , include = FALSE}
 data_tidy_clin_adult <- data_tidy_clin_adult %>%
   dplyr::select(pid, age, sex, race, everything())
 ```
@@ -1339,7 +1218,7 @@ datautils::view_cols(
 )
 ```
 
-```{r }
+```{r , include = FALSE}
 usethis::use_data(data_tidy_clin_adult, 
                   overwrite = TRUE)
 ```
