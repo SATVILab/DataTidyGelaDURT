@@ -648,7 +648,7 @@ sheet_vec <- c(
 )
 path_data_raw <- file.path(
   dir_data_raw, 
-  "2021_10_01,Gela,email-Figure 6- Memory profile.xlsx"
+  "2021_10_02,Gela,email-Figure 6- Memory profile.xlsx"
 )
 data_tidy_mem_adult <- purrr::map_df(sheet_vec, function(sheet) {
   data_raw <- readxl::read_xlsx(
