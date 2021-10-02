@@ -509,6 +509,8 @@ usethis::use_data(data_tidy_hladr_adult,
 
 ## Memory profile (Figure 6)
 
+### Infants
+
 ```{r }                           
 sheet_vec <- c(
   "MAIT cells", 
@@ -520,7 +522,7 @@ path_data_raw <- file.path(
   dir_data_raw, 
   "2021_09_16,Gela,email-Figure 5- Memory profile.xlsx"
 )
-data_tidy_mem <- purrr::map_df(sheet_vec, function(sheet) {
+data_tidy_mem_infant <- purrr::map_df(sheet_vec, function(sheet) {
   data_raw_grp <- readxl::read_xlsx(
     file.path(
       path_data_raw 
@@ -605,9 +607,10 @@ data_tidy_mem <- purrr::map_df(sheet_vec, function(sheet) {
     ) %>%
     dplyr::select(pid, age, bcg, pop, pop_sub, freq)
 }) %>%
-  tibble::as_tibble()
+  tibble::as_tibble() %>%
+  dplyr::filter(grepl("infant", pid))
 
-data_tidy_mem <- data_tidy_mem %>%
+data_tidy_mem_infant <- data_tidy_mem_infant %>%
   dplyr::mutate(
     pop_sub = purrr::map_chr(pop_sub, function(x) {
       switch(
@@ -623,20 +626,20 @@ data_tidy_mem <- data_tidy_mem %>%
 
 ```{r }
 datautils::view_cols(
-  data_tidy_mem
+  data_tidy_mem_infant
 )
 ```
 
 ```{r }
 usethis::use_data(
-  data_tidy_mem, 
+  data_tidy_mem_infant, 
   overwrite = TRUE
   )
 ```
 
-## Supp Fig
+### Adults
 
-```{r }
+```{r }                           
 sheet_vec <- c(
   "MAIT cells", 
   "NKT cells", 
@@ -645,77 +648,112 @@ sheet_vec <- c(
 )
 path_data_raw <- file.path(
   dir_data_raw, 
-  "2021_09_16,Gela,email-Supplimental figure.xlsx"
+  "2021_10_01,Gela,email-Figure 6- Memory profile.xlsx"
 )
-
-data_tidy_mem_long <- purrr::map_df(sheet_vec, function(sheet) {
+data_tidy_mem_adult <- purrr::map_df(sheet_vec, function(sheet) {
   data_raw <- readxl::read_xlsx(
     file.path(
       path_data_raw 
     ), 
     sheet = sheet, 
-    n_max = 25,
-  ) %>%
-    dplyr::select(`CCR7+CD45RA+`:`CCR7-CD45RA-`, `Sample ID`) %>%
-    dplyr::mutate(
-      pop = sheet,
-      age = "adult",
-      row = 1:(dplyr::n())
-    )  %>%
-    dplyr::mutate(
-      pid = paste0(
-        age,
-        "_",
-        ifelse(str_length(row) == 1, 
-               paste0("0", row), row))
-    ) %>%
-    dplyr::rename(pid_sheet = `Sample ID`) %>%
-    dplyr::select(-c(row, age))
-  data_raw <- data_raw %>%
+    skip = 2, 
+    col_names = FALSE
+  )
+  data_raw_pop <- readxl::read_xlsx(
+    file.path(
+      path_data_raw 
+    ), 
+    sheet = sheet, 
+    n_max = 1,
+    skip = 0
+  )
+  info_tbl <- data_raw_pop %>%
+    dplyr::mutate(id = 1) %>%
     tidyr::pivot_longer(
-      -c(pid, pid_sheet, pop), 
-      names_to = "pop_sub", 
-      values_to = "freq"
-    ) %>%
-    dplyr::select(
-      pid, pop, pop_sub, freq
+      -id, 
+      names_to = "grp", 
+      values_to = "pop"
     ) %>%
     dplyr::mutate(
-      pop = long_to_short_pop[pop]
+      grp = stringr::str_replace_all(
+        grp, " ", "_"
+      )
     )
+  for (i in seq_len(nrow(info_tbl))) {
+    if (is.na(info_tbl$pop[[i]])) {
+      info_tbl[i, "pop"] <- info_tbl[i - 1, "pop"]
+    }
+  }
+  cn_vec <- paste0(info_tbl$grp, info_tbl$pop)
+  colnames(data_raw) <- cn_vec
+  
+  cn_vec_sel <- cn_vec[
+    grepl("^Adult", cn_vec)  
+  ]
+  data_raw <- data_raw[,cn_vec_sel]
+  
   data_raw %>%
     dplyr::mutate(
-      freq = gsub(" \\%$", "", freq) %>%
-        as.numeric()
-    )
+      row = seq_len(dplyr::n()),
+      row = as.character(row),
+      row = ifelse(
+        stringr::str_length(row) == 1, 
+        paste0("0", row),
+        row
+        ),
+    ) %>%
+    dplyr::mutate(pid = paste0("adult_", row)) %>%
+    dplyr::select(-row) %>%
+    tidyr::pivot_longer(
+      -pid, 
+      names_to = "var", 
+      values_to = "freq"
+    ) %>%
+    dplyr::mutate(
+      age =  "adult"
+    ) %>%
+    dplyr::mutate(
+      pop_sub = stringr::str_sub(stringr::str_remove_all(var, "\\s"),
+                                 start = - 12)
+    ) %>%
+    dplyr::mutate(
+      day = stringr::str_remove_all(var, "Adult_Day_"), 
+      day = stringr::str_remove_all(day, "CCR7") %>%
+        stringr::str_remove_all("CD45RA") %>%
+        stringr::str_remove_all("\\+|\\-") %>%
+        stringr::str_remove_all("\\.\\.\\.\\d+"), 
+      day = as.numeric(day)
+    ) %>%
+    dplyr::select(-var) %>%
+    dplyr::mutate(
+      pop = long_to_short_pop[sheet]
+    ) %>%
+    dplyr::select(pid, age, day, pop, pop_sub, freq)
 }) %>%
-  tibble::as_tibble()
+  tibble::as_tibble() %>%
+  dplyr::filter(grepl("adult", pid))
 
-data_tidy_mem_long <- data_tidy_mem_long %>%
+data_tidy_mem_adult <- data_tidy_mem_adult %>%
   dplyr::mutate(
     pop_sub = purrr::map_chr(pop_sub, function(x) {
       switch(
         x, 
-        "CCR7+CD45RA-" = "CD45RA-CCR7+", 
-        "CCR7-CD45RA-" = "CD45RA-CCR7-", 
         "CCR7+CD45RA+" = "CD45RA+CCR7+", 
-        "CCR7-CD45RA+" = "CD45RA+CCR7-",
         x
       )
     })
   )
-
 ```
 
 ```{r }
 datautils::view_cols(
-  data_tidy_mem_long
+  data_tidy_mem_adult
 )
 ```
 
 ```{r }
 usethis::use_data(
-  data_tidy_mem_long, 
+  data_tidy_mem_adult, 
   overwrite = TRUE
   )
 ```
