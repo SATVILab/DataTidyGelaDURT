@@ -599,7 +599,7 @@ data_tidy_mem <- purrr::map_df(sheet_vec, function(sheet) {
       grp = as.numeric(grp)
     ) %>%
     dplyr::mutate(
-      grp = ifelse(age == "infant" & grepl("^No BCG", var), 
+      grp = ifelse(age == "infant" & grepl("^No_BCG", var), 
                    "no bcg", grp),
       grp = ifelse(age == "infant" & grepl("^BCG", var), 
                    "bcg", grp)
