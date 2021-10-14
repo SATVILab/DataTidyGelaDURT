@@ -507,6 +507,100 @@ usethis::use_data(data_tidy_hladr_adult,
                   overwrite = TRUE)
 ```
 
+## IFN$\gamma$+ frequency: Infants (Figure 5)
+
+```{r }
+path_data_raw <- file.path(
+  dir_data_raw, 
+  "2021_10_11,Murphy,email-20211011_Raw data for figure 5 of DURT manuscript.xlsx"
+)
+
+sheet_vec <- c(
+  "Figure 5B-main flow panel", 
+  "Figure 5D- 9W flow panel", 
+  "Figure 5F- 9W flow panel", 
+  "Figure 5G- 9W flow panel" 
+)
+
+sheet_to_pop <- setNames(
+  c("gd", "cd26_161", "cd26_161", "cd26_161"),
+  sheet_vec
+)
+sheet <- sheet_vec[1]
+long_to_short_pop_sub <- c(
+  "IFNg+GDTCR+" = "-", 
+  "IFNg+CD3+" = "-",
+  "G+CD8+" = "cd8p_cd4n",
+  "G+CD8-CD4-" = "cd8n_cd4n",
+  "G+CD4+" = "cd8n_cd4p",
+  "TRAV1-2+" = "trav12p", 
+  "TRAV1-2-" = "trav12n"
+)
+data_tidy_freq_ifng <- purrr::map_df(sheet_vec, function(sheet) {
+  readxl::read_xlsx(
+    file.path(
+      path_data_raw 
+    ), 
+    sheet = sheet 
+  ) %>%
+    dplyr::rename(
+      pid_sheet = PID, 
+      bcg = `Vaccination status`
+    ) %>%
+    dplyr::mutate(
+      pid_sheet = as.character(pid_sheet)
+    ) %>%
+    dplyr::mutate(
+      pid = sheet_to_r_pid_infant_ifng[pid_sheet], 
+      pid = ifelse(is.na(pid), pid_sheet, pid)
+    ) %>%
+    dplyr::mutate(
+      pid = purrr::map_chr(pid, function(x) {
+        switch(
+          x, 
+          "3103" = "infant_76", 
+          "5078" = "infant_77", 
+          "5139" = "infant_78", 
+          x
+        )
+      })
+    ) %>%
+    dplyr::mutate(
+      pop = sheet_to_pop[sheet]
+    ) %>%
+    tidyr::pivot_longer(
+      -c(pid_sheet, pid, bcg, pop), 
+      names_to = "pop_sub", 
+      values_to = "freq_ifng"
+    ) %>%
+
+    dplyr::select(
+      pid, bcg, pop, pop_sub, freq_ifng
+    ) %>%
+    dplyr::mutate(
+      pop_sub = long_to_short_pop_sub[pop_sub]
+    ) %>%
+    dplyr::mutate(
+      bcg = ifelse(bcg == "BCG", "bcg", bcg), 
+      bcg = ifelse(bcg == "NO BCG", "no bcg", bcg)
+    ) 
+}) %>%
+  tibble::as_tibble()
+```
+
+```{r }
+datautils::view_cols(
+  data_tidy_freq_ifng
+)
+```
+
+```{r , include = FALSE}
+usethis::use_data(
+  data_tidy_freq_ifng, 
+  overwrite = TRUE
+  )
+```
+
 ## Memory profile (Figure 6)
 
 ```{r , include = FALSE}                           
@@ -886,6 +980,79 @@ Place categorical variables first, and then continuous variables.
 data_tidy_clin_infant <- data_tidy_clin_infant %>%
   dplyr::select(pid, bcg, age, race, sex, everything()) %>%
   dplyr::select(-pid_sheet)
+```
+
+##### Add data for three extra infants
+
+Three infants were included in the `data_tidy_freq_ifng` dataset that are not found elsewhere. Their clinical data are added here. 
+
+```{r }
+path_data_raw <- file.path(
+  dir_data_raw, 
+  "2021_10_14,Murphy,email-Clinical data-9W DBCG.xlsx"
+)
+data_tidy_clin_infant_add <- readxl::read_xlsx(
+  path_data_raw
+  ) %>%
+  dplyr::rename(pid_sheet = `ID (D-BCG)`) %>%
+  dplyr::rename(bcg = Status) %>%
+  dplyr::mutate(
+    bcg = purrr::map_chr(bcg, function(x) {
+      switch(
+        x, 
+        "Vaccinated" = "bcg", 
+        "Unvaccinated" = "no bcg", 
+        x
+      )
+    })
+  ) %>%
+  dplyr::select(-Group) %>%
+  dplyr::rename(
+    race = Race, 
+    sex = Sex, 
+    visit_age = Weeks
+  ) %>%
+  dplyr::mutate(
+    sex = purrr::map_chr(sex, function(x) {
+      switch(
+        x, 
+        "M" = "male",
+        "F" = "female",
+        x
+      )
+    })
+  ) %>%
+  dplyr::mutate(
+    pid_sheet = as.character(pid_sheet)
+  ) %>%
+  dplyr::mutate(
+    pid = sheet_to_r_pid_infant_ifng[pid_sheet],
+    pid = ifelse(is.na(pid), pid_sheet, pid)
+    ) %>%
+    dplyr::mutate(
+      pid = purrr::map_chr(pid, function(x) {
+        switch(
+          x, 
+          "3103" = "infant_76", 
+          "5078" = "infant_77", 
+          "5139" = "infant_78", 
+          x
+        )
+      })
+    ) %>%
+  dplyr::mutate(age = "infant") %>%
+  dplyr::select(pid, bcg, race, sex, visit_age)
+
+data_tidy_clin_infant <- data_tidy_clin_infant %>%
+  dplyr::bind_rows(
+    data_tidy_clin_infant_add %>%
+      dplyr::filter(
+        !pid %in% data_tidy_clin_infant$pid
+      )
+  )
+
+data_tidy_clin_infant <- data_tidy_clin_infant %>%
+  dplyr::mutate(age = "infant")
 ```
 
 ##### View
