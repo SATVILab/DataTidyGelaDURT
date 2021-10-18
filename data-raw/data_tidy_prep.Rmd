@@ -414,13 +414,14 @@ data_tidy_hladr_infant <- purrr::map_df(sheet_vec, function(sheet) {
         data_raw_infant_bcg_cd4_ifng
       )
   }
+
   data_out %>%
     dplyr::mutate(
       bcg = tolower(bcg)
     ) %>%
     dplyr::select(-age) %>%
     dplyr::mutate(
-      pid = sheet_to_r_pid_infant_ifng[pid_sheet]
+      pid = sheet_to_r_pid_infant_ifng[as.character(pid_sheet)]
     ) %>%
     dplyr::select(-pid_sheet)
 }) %>%
@@ -435,8 +436,10 @@ datautils::view_cols(
 ```
 
 ```{r , include = FALSE}
-usethis::use_data(data_tidy_hladr_infant, 
-                  overwrite = TRUE)
+usethis::use_data(
+  data_tidy_hladr_infant,
+  overwrite = TRUE
+  )
 ```
 
 ## HLADR MFI: Adults (Figure 4)
