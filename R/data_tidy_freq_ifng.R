@@ -1,0 +1,32 @@
+#' @rdname data_tidy_freq_ifng
+#'
+#' @title Frequencies of IFNg+ cells
+#'
+#' @description Background-subtracted frequencies of
+#' IFNg+ cells.
+#'
+#' @format Dataframe with 284 rows and the following 5 columns:
+#' \describe{
+#'   \item{pid}{character. Participant ID.}
+#'   \item{bcg}{"bcg", "no bcg".
+#'   BCG status for infants ("no bcg" -> delayed BCG; "bcg" -> BCG at birth).}
+#'   \item{pop}{character. Major cell type. "cd26_161" is CD26+CD161+ cells,
+#'   and "gd" is TCRgd T cells.}
+#'   \item{pop_sub}{character.
+#'   Further phenotyping of major cell type.
+#'   "-" means no further phenotyping,
+#'   "cd8[n/p]cd4[n/p]" means
+#'   CD8(-/+)CD4(-/+), and
+#'   "trav12[n/p]" means TRAV1-2(-/+).}
+#'   \item{freq_ifng}{numeric.
+#'   Frequency of parent population (). For all
+#'   populations except "trav12[n/p]", the parent population is
+#'   specified by \code{pop} and \code{pop_sub}, and
+#'   the frequency is for all cells that are IFNg}.
+#'   Where the \code{pop_sub} is "trav12[n/p]",
+#'   the parent population is
+#'   CD4+CD26+CD161+IFNg+ T cells, and the frequency is
+#'   for all cells that are TRAV1-2(-/+).}
+#' }
+#'
+"data_tidy_freq_ifng"

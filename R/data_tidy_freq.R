@@ -1,0 +1,25 @@
+#' @rdname data_tidy_freq
+#'
+#' @title Major cell population frequencies
+#'
+#' @description Frequencies of major cell populations
+#'
+#' @format Dataframe with 720 rows and the following 5 columns:
+#' \describe{
+#'   \item{pid}{character. Participant ID.}
+#'   \item{bcg}{"bcg", "no bcg", "before" or "after".
+#'   BCG status for infants ("no bcg" -> delayed BCG; "bcg" -> BCG at birth)
+#'   and adults ("before" -> before BCG revaccination; "after" -> 35 days
+#'   after BCG revaccination).}
+#'   \item{pop}{character. Cell type. "mait" is MAIT cells,
+#'   "nkt" is NKT cells, "cd1b" is CD1b GMM T cells,
+#'   "gem" is GEM T cells, "gd" is TCRgd T cells,
+#'   "cd4" is CD4 T cells and "cd4_ifng" is
+#'   IFNg+ CD4 T cells.}
+#'   \item{freq}{numeric. Frequency of parent population, where
+#'   the parent population is all cells for all population types
+#'   except IFNg+ CD4 T cells, where the parent population is
+#'   CD4 T cells.}
+#' }
+#'
+"data_tidy_freq"

@@ -14,6 +14,12 @@ library(magrittr)
 library(stringr)
 ```
 
+```{r }
+dir_save_csv <- here::here("inst", "extdata")
+if (!dir.exists(dir_save_csv)) dir.create(dir_save_csv, 
+                                          recursive = TRUE)
+```
+
 ```{r , include = FALSE}
 unlink(here::here("data"))
 dir_data_raw <- file.path(
@@ -288,7 +294,8 @@ data_tidy_freq <- purrr::map_df(sheet_vec, function(sheet) {
   data_out
 
 }) %>%
-  tibble::as_tibble()
+  tibble::as_tibble() %>%
+  dplyr::select(-pid_sheet)
 ```
 
 ```{r }
@@ -300,6 +307,13 @@ datautils::view_cols(
 ```{r , include = FALSE}
 usethis::use_data(data_tidy_freq, 
                   overwrite = TRUE)
+```
+
+```{r }
+readr::write_csv(
+  x = data_tidy_freq, 
+  file = file.path(dir_save_csv, "data_tidy_freq.csv")
+)
 ```
 
 ## HLADR MFI: Infants (Figure 3)
@@ -442,6 +456,14 @@ usethis::use_data(
   )
 ```
 
+```{r }
+readr::write_csv(
+  x = data_tidy_hladr_infant, 
+  file = file.path(dir_save_csv, "data_tidy_hladr_infant.csv")
+)
+```
+
+
 ## HLADR MFI: Adults (Figure 4)
 
 ```{r , include = FALSE}
@@ -508,6 +530,13 @@ datautils::view_cols(
 ```{r , include = FALSE}
 usethis::use_data(data_tidy_hladr_adult, 
                   overwrite = TRUE)
+```
+
+```{r }
+readr::write_csv(
+  x = data_tidy_hladr_adult, 
+  file = file.path(dir_save_csv, "data_tidy_hladr_adult.csv")
+)
 ```
 
 ## IFN$\gamma$+ frequency: Infants (Figure 5)
@@ -603,6 +632,14 @@ usethis::use_data(
   overwrite = TRUE
   )
 ```
+
+```{r }
+readr::write_csv(
+  x = data_tidy_freq_ifng, 
+  file = file.path(dir_save_csv, "data_tidy_freq_ifng.csv")
+)
+```
+
 
 ## Memory profile (Figure 6)
 
@@ -732,6 +769,13 @@ usethis::use_data(
   data_tidy_mem, 
   overwrite = TRUE
   )
+```
+
+```{r }
+readr::write_csv(
+  x = data_tidy_mem, 
+  file = file.path(dir_save_csv, "data_tidy_mem.csv")
+)
 ```
 
 ## Clinical data - Infants
@@ -1058,6 +1102,13 @@ data_tidy_clin_infant <- data_tidy_clin_infant %>%
   dplyr::mutate(age = "infant")
 ```
 
+##### Remove unused and very descriptive columns. 
+
+```{r }
+data_tidy_clin_infant <- data_tidy_clin_infant %>%
+  dplyr::select(-c(visit_age, gest_age, weight, length, head_circ))
+```
+
 ##### View
 
 ```{r }
@@ -1070,6 +1121,14 @@ datautils::view_cols(
 usethis::use_data(data_tidy_clin_infant, 
                   overwrite = TRUE)
 ```
+
+```{r }
+readr::write_csv(
+  x = data_tidy_clin_infant, 
+  file = file.path(dir_save_csv, "data_tidy_clin_infant.csv")
+)
+```
+
 
 ## Clinical data - Adults
 
@@ -1380,6 +1439,13 @@ data_tidy_clin_adult <- data_tidy_clin_adult %>%
   dplyr::select(pid, age, sex, race, everything())
 ```
 
+##### Remove unused and very descriptive columns. 
+
+```{r }
+data_tidy_clin_adult <- data_tidy_clin_adult %>%
+  dplyr::select(-c(age_in_years, hgbval, height, weight, ppd))
+```
+
 #### View
 
 ```{r }
@@ -1391,4 +1457,31 @@ datautils::view_cols(
 ```{r , include = FALSE}
 usethis::use_data(data_tidy_clin_adult, 
                   overwrite = TRUE)
+```
+
+```{r }
+readr::write_csv(
+  x = data_tidy_clin_adult, 
+  file = file.path(dir_save_csv, "data_tidy_clin_adult.csv")
+)
+```
+
+## Zip files together
+
+```{r }
+wd <- getwd()
+setwd(dirname(wd))
+file_vec <- list.files(dir_save_csv, full.names = FALSE, 
+                       pattern = "csv$")
+file_vec <- paste0("inst/extdata/", file_vec)
+file_zip <- file.path("inst", "extdata", 
+                      "data_tidy_gela_durt.zip")
+if (file.exists(file_zip)) unlink(file_zip, recursive = TRUE)
+
+zip::zip(
+  zipfile = file_zip, 
+  files = file_vec
+)
+
+setwd(wd)
 ```
