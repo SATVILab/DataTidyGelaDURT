@@ -3,7 +3,7 @@
 #' @title Frequencies of IFNg+ cells
 #'
 #' @description Background-subtracted frequencies of
-#' IFNg+ cells.
+#' IFNg+ cells for various subsets.
 #'
 #' @format Dataframe with 284 rows and the following 5 columns:
 #' \describe{
@@ -22,7 +22,7 @@
 #'   Frequency of parent population (). For all
 #'   populations except "trav12[n/p]", the parent population is
 #'   specified by \code{pop} and \code{pop_sub}, and
-#'   the frequency is for all cells that are IFNg}.
+#'   the frequency is for all cells that are IFNg.
 #'   Where the \code{pop_sub} is "trav12[n/p]",
 #'   the parent population is
 #'   CD4+CD26+CD161+IFNg+ T cells, and the frequency is

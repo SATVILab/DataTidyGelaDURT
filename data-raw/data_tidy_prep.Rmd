@@ -15,9 +15,9 @@ library(stringr)
 ```
 
 ```{r }
-dir_save_csv <- here::here("inst", "extdata")
-if (!dir.exists(dir_save_csv)) dir.create(dir_save_csv, 
-                                          recursive = TRUE)
+dir_save_csv <- file.path("inst", "extdata", "csv")
+if (dir.exists(dir_save_csv)) unlink(dir_save_csv, recursive = TRUE)
+dir.create(dir_save_csv, recursive = TRUE)
 ```
 
 ```{r , include = FALSE}
@@ -1470,18 +1470,84 @@ readr::write_csv(
 
 ```{r }
 wd <- getwd()
-setwd(dirname(wd))
-file_vec <- list.files(dir_save_csv, full.names = FALSE, 
-                       pattern = "csv$")
-file_vec <- paste0("inst/extdata/", file_vec)
-file_zip <- file.path("inst", "extdata", 
-                      "data_tidy_gela_durt.zip")
-if (file.exists(file_zip)) unlink(file_zip, recursive = TRUE)
+if (!identical(basename(wd), "DataTidyGelaDURT")) {
+  setwd(dirname(wd))
+}
 
-zip::zip(
-  zipfile = file_zip, 
-  files = file_vec
+# zip files to save to 
+file_save_csv <- file.path(
+  dirname(dir_save_csv), "data_raw-csv.zip"
+  )
+
+file_save_help <- file.path(
+  dirname(dir_save_csv), "data_raw-help.zip"
+  )
+
+file_save_pkg_win <- file.path(
+  dirname(dir_save_csv), "data_raw-r_pkg-windows_only.zip"
 )
 
+file_save_pkg_any <- file.path(
+  dirname(dir_save_csv), "data_raw-r_pkg-any_platform.zip"
+)
+
+# build package so that you can 
+# extract help docs
+devtools::install(pkg = here::here(), upgrade = "never")
+
+# help docs
+dir_help <- system.file(
+  "html", package = "DataTidyGelaDURT"
+  )
+file_vec <- list.files(dir_help, full.names = TRUE, 
+                       pattern = "html$")
+
+if (file.exists(file_save_help)) unlink(file_save_help, recursive = TRUE)
+
+zip::zip(
+  zipfile = file_save_help, 
+  files = file_vec, 
+  mode = "cherry-pick"
+)
+
+# raw data
+file_vec <- list.files(dir_save_csv, full.names = TRUE, 
+                       pattern = "csv$")
+
+if (file.exists(file_save_csv)) unlink(file_save_csv, recursive = TRUE)
+
+zip::zip(
+  zipfile = file_save_csv, 
+  files = file_vec, 
+  mode = "cherry-pick"
+)
+
+# build package for all platforms
+devtools::build(
+  pkg = here::here(), 
+  binary = FALSE
+)
+if (file.exists(file.path(dirname(dir_save_csv), "DataTidyGelaDURT_0.1.0.tar.gz"))) {
+  file.remove(file.path(dirname(dir_save_csv), "DataTidyGelaDURT_0.1.0.tar.gz"))
+}
+file.copy(
+  file.path(dirname(getwd()), "DataTidyGelaDURT_0.1.0.tar.gz"), 
+  file.path(dirname(dir_save_csv), "DataTidyGelaDURT_0.1.0.tar.gz")
+)
+file.remove(file.path(dirname(getwd()), "DataTidyGelaDURT_0.1.0.tar.gz"))
+
+# build package for Windows
+if (file.exists(file.path(dirname(dir_save_csv), "DataTidyGelaDURT_0.1.0.zip"))) {
+  file.remove(file.path(dirname(dir_save_csv), "DataTidyGelaDURT_0.1.0.zip"))
+}
+devtools::build(
+  pkg = here::here(), 
+  binary = TRUE
+)
+file.copy(
+  file.path(dirname(getwd()), "DataTidyGelaDURT_0.1.0.zip"), 
+  file.path(dirname(dir_save_csv), "DataTidyGelaDURT_0.1.0.zip")
+)
+file.remove(file.path(dirname(getwd()), "DataTidyGelaDURT_0.1.0.zip"))
 setwd(wd)
 ```

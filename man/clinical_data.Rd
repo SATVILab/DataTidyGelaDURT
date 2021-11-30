@@ -18,7 +18,7 @@ Dataframes with the following variables
   \item{bcg}{"bcg" or "no bcg". BCG status. Infants only.}
 }
 
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 25 rows and 9 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 25 rows and 4 columns.
 }
 \usage{
 data_tidy_clin_infant

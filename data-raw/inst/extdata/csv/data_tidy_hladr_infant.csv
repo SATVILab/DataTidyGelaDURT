@@ -1,0 +1,316 @@
+pid,bcg,pop,hladr_mfi
+infant_01,no bcg,cd4,33.7
+infant_02,no bcg,cd4,33.7
+infant_03,no bcg,cd4,34.1
+infant_04,no bcg,cd4,27.6
+infant_05,no bcg,cd4,0
+infant_06,no bcg,cd4,0
+infant_07,no bcg,cd4,0
+infant_08,no bcg,cd4,0
+infant_09,no bcg,cd4,20
+infant_10,no bcg,cd4,11.5
+infant_11,no bcg,cd4,0
+infant_12,no bcg,cd4,21.5
+infant_13,no bcg,cd4,5.76
+infant_14,no bcg,cd4,0
+infant_15,no bcg,cd4,7.14
+infant_16,no bcg,cd4,14.3
+infant_17,no bcg,cd4,0
+infant_18,no bcg,cd4,106
+infant_19,no bcg,cd4,7.17
+infant_20,no bcg,cd4,10
+infant_21,no bcg,cd4,68.2
+infant_22,no bcg,cd4,113
+infant_23,no bcg,cd4,25.8
+infant_24,no bcg,cd4,0
+infant_25,no bcg,cd4,0
+infant_26,bcg,cd4,27
+infant_27,bcg,cd4,23.6
+infant_29,bcg,cd4,10
+infant_51,bcg,cd4,138
+infant_52,bcg,cd4,26
+infant_53,bcg,cd4,24.3
+infant_54,bcg,cd4,19.5
+infant_55,bcg,cd4,13
+infant_56,bcg,cd4,9.77
+infant_57,bcg,cd4,15.7
+infant_58,bcg,cd4,14.3
+infant_30,bcg,cd4,11.4
+infant_59,bcg,cd4,0
+infant_32,bcg,cd4,60
+infant_36,bcg,cd4,11.5
+infant_37,bcg,cd4,116
+infant_39,bcg,cd4,20.2
+infant_41,bcg,cd4,84.2
+infant_43,bcg,cd4,82.7
+infant_60,bcg,cd4,5.76
+infant_45,bcg,cd4,34.3
+infant_61,bcg,cd4,37.2
+infant_47,bcg,cd4,113
+infant_48,bcg,cd4,91.5
+infant_62,bcg,cd4,15.8
+infant_63,bcg,cd4,0
+infant_28,bcg,cd4,0
+infant_64,bcg,cd4,2.86
+infant_65,bcg,cd4,5.72
+infant_66,bcg,cd4,2.86
+infant_67,bcg,cd4,106
+infant_68,bcg,cd4,94.4
+infant_69,bcg,cd4,30.1
+infant_70,bcg,cd4,30.1
+infant_71,bcg,cd4,21.5
+infant_31,bcg,cd4,27.3
+infant_33,bcg,cd4,17.2
+infant_34,bcg,cd4,27.3
+infant_35,bcg,cd4,18.6
+infant_72,bcg,cd4,10
+infant_38,bcg,cd4,11.4
+infant_73,bcg,cd4,5.72
+infant_40,bcg,cd4,0
+infant_42,bcg,cd4,0
+infant_44,bcg,cd4,23
+infant_74,bcg,cd4,18.6
+infant_46,bcg,cd4,35.9
+infant_75,bcg,cd4,17.2
+infant_49,bcg,cd4,0
+infant_50,bcg,cd4,2.87
+infant_26,bcg,cd4_ifng,384
+infant_27,bcg,cd4_ifng,35.4
+infant_29,bcg,cd4_ifng,89
+infant_51,bcg,cd4_ifng,201
+infant_52,bcg,cd4_ifng,74.7
+infant_53,bcg,cd4_ifng,66.5
+infant_54,bcg,cd4_ifng,175
+infant_55,bcg,cd4_ifng,162
+infant_56,bcg,cd4_ifng,246
+infant_57,bcg,cd4_ifng,194
+infant_58,bcg,cd4_ifng,116
+infant_30,bcg,cd4_ifng,133
+infant_59,bcg,cd4_ifng,213
+infant_32,bcg,cd4_ifng,55.7
+infant_36,bcg,cd4_ifng,92.2
+infant_37,bcg,cd4_ifng,178
+infant_39,bcg,cd4_ifng,152
+infant_41,bcg,cd4_ifng,55.1
+infant_43,bcg,cd4_ifng,135
+infant_60,bcg,cd4_ifng,93.7
+infant_45,bcg,cd4_ifng,156
+infant_61,bcg,cd4_ifng,150
+infant_47,bcg,cd4_ifng,188
+infant_48,bcg,cd4_ifng,128
+infant_62,bcg,cd4_ifng,212
+infant_63,bcg,cd4_ifng,249
+infant_28,bcg,cd4_ifng,249
+infant_64,bcg,cd4_ifng,129
+infant_65,bcg,cd4_ifng,152
+infant_66,bcg,cd4_ifng,102
+infant_67,bcg,cd4_ifng,192
+infant_68,bcg,cd4_ifng,126
+infant_69,bcg,cd4_ifng,174
+infant_70,bcg,cd4_ifng,113
+infant_71,bcg,cd4_ifng,105
+infant_31,bcg,cd4_ifng,163
+infant_33,bcg,cd4_ifng,138
+infant_34,bcg,cd4_ifng,152
+infant_35,bcg,cd4_ifng,145
+infant_72,bcg,cd4_ifng,184
+infant_38,bcg,cd4_ifng,133
+infant_73,bcg,cd4_ifng,205
+infant_40,bcg,cd4_ifng,150
+infant_42,bcg,cd4_ifng,206
+infant_44,bcg,cd4_ifng,170
+infant_74,bcg,cd4_ifng,171
+infant_46,bcg,cd4_ifng,230
+infant_75,bcg,cd4_ifng,507
+infant_49,bcg,cd4_ifng,109
+infant_50,bcg,cd4_ifng,174
+infant_01,no bcg,mait,465
+infant_02,no bcg,mait,270
+infant_03,no bcg,mait,164
+infant_04,no bcg,mait,155
+infant_05,no bcg,mait,196
+infant_06,no bcg,mait,286
+infant_07,no bcg,mait,139
+infant_08,no bcg,mait,179
+infant_09,no bcg,mait,168
+infant_10,no bcg,mait,96.4
+infant_11,no bcg,mait,470
+infant_12,no bcg,mait,324
+infant_13,no bcg,mait,389
+infant_14,no bcg,mait,429
+infant_15,no bcg,mait,340
+infant_16,no bcg,mait,2544
+infant_17,no bcg,mait,624
+infant_18,no bcg,mait,345
+infant_19,no bcg,mait,362
+infant_20,no bcg,mait,910
+infant_21,no bcg,mait,381
+infant_22,no bcg,mait,487
+infant_23,no bcg,mait,410
+infant_24,no bcg,mait,483
+infant_25,no bcg,mait,291
+infant_26,bcg,mait,198
+infant_27,bcg,mait,92.5
+infant_28,bcg,mait,32.1
+infant_29,bcg,mait,156
+infant_30,bcg,mait,187
+infant_31,bcg,mait,86.1
+infant_32,bcg,mait,179
+infant_33,bcg,mait,215
+infant_34,bcg,mait,504
+infant_35,bcg,mait,212
+infant_36,bcg,mait,473
+infant_37,bcg,mait,1072
+infant_38,bcg,mait,453
+infant_39,bcg,mait,233
+infant_40,bcg,mait,496
+infant_41,bcg,mait,359
+infant_42,bcg,mait,685
+infant_43,bcg,mait,299
+infant_44,bcg,mait,946
+infant_45,bcg,mait,718
+infant_46,bcg,mait,561
+infant_47,bcg,mait,565
+infant_48,bcg,mait,5393
+infant_49,bcg,mait,245
+infant_50,bcg,mait,403
+infant_01,no bcg,nkt,460
+infant_02,no bcg,nkt,593
+infant_03,no bcg,nkt,410
+infant_04,no bcg,nkt,574
+infant_05,no bcg,nkt,493
+infant_06,no bcg,nkt,484
+infant_07,no bcg,nkt,500
+infant_08,no bcg,nkt,317
+infant_09,no bcg,nkt,369
+infant_10,no bcg,nkt,406
+infant_11,no bcg,nkt,869
+infant_12,no bcg,nkt,730
+infant_13,no bcg,nkt,730
+infant_14,no bcg,nkt,831
+infant_15,no bcg,nkt,0
+infant_16,no bcg,nkt,968
+infant_17,no bcg,nkt,823
+infant_18,no bcg,nkt,580
+infant_19,no bcg,nkt,842
+infant_20,no bcg,nkt,864
+infant_21,no bcg,nkt,700
+infant_22,no bcg,nkt,805
+infant_23,no bcg,nkt,866
+infant_24,no bcg,nkt,970
+infant_25,no bcg,nkt,772
+infant_26,bcg,nkt,541
+infant_27,bcg,nkt,437
+infant_28,bcg,nkt,336
+infant_29,bcg,nkt,427
+infant_30,bcg,nkt,377
+infant_31,bcg,nkt,356
+infant_32,bcg,nkt,377
+infant_33,bcg,nkt,304
+infant_34,bcg,nkt,562
+infant_35,bcg,nkt,606
+infant_36,bcg,nkt,786
+infant_37,bcg,nkt,810
+infant_38,bcg,nkt,899
+infant_39,bcg,nkt,689
+infant_40,bcg,nkt,826
+infant_41,bcg,nkt,880
+infant_42,bcg,nkt,752
+infant_43,bcg,nkt,794
+infant_44,bcg,nkt,738
+infant_45,bcg,nkt,559
+infant_46,bcg,nkt,689
+infant_47,bcg,nkt,628
+infant_48,bcg,nkt,796
+infant_49,bcg,nkt,600
+infant_50,bcg,nkt,830
+infant_01,no bcg,cd1b,608
+infant_02,no bcg,cd1b,669
+infant_03,no bcg,cd1b,1633
+infant_04,no bcg,cd1b,309
+infant_05,no bcg,cd1b,968
+infant_07,no bcg,cd1b,80.9
+infant_08,no bcg,cd1b,1487
+infant_09,no bcg,cd1b,365
+infant_11,no bcg,cd1b,26384
+infant_12,no bcg,cd1b,2563
+infant_13,no bcg,cd1b,2123
+infant_14,no bcg,cd1b,12582
+infant_15,no bcg,cd1b,3034
+infant_16,no bcg,cd1b,1381
+infant_17,no bcg,cd1b,14250
+infant_19,no bcg,cd1b,3641
+infant_20,no bcg,cd1b,424
+infant_21,no bcg,cd1b,2815
+infant_22,no bcg,cd1b,147
+infant_23,no bcg,cd1b,2718
+infant_24,no bcg,cd1b,2728
+infant_25,no bcg,cd1b,4761
+infant_26,bcg,cd1b,69849
+infant_28,bcg,cd1b,75.8
+infant_30,bcg,cd1b,544
+infant_32,bcg,cd1b,738
+infant_33,bcg,cd1b,2328
+infant_37,bcg,cd1b,1360
+infant_38,bcg,cd1b,2905
+infant_39,bcg,cd1b,534
+infant_40,bcg,cd1b,7992
+infant_41,bcg,cd1b,888
+infant_42,bcg,cd1b,199
+infant_43,bcg,cd1b,6067
+infant_44,bcg,cd1b,2992
+infant_45,bcg,cd1b,3434
+infant_47,bcg,cd1b,95068
+infant_48,bcg,cd1b,6836
+infant_49,bcg,cd1b,1509
+infant_50,bcg,cd1b,19347
+infant_01,no bcg,gd,324
+infant_02,no bcg,gd,187
+infant_03,no bcg,gd,614
+infant_04,no bcg,gd,186
+infant_05,no bcg,gd,356
+infant_06,no bcg,gd,328
+infant_07,no bcg,gd,179
+infant_08,no bcg,gd,203
+infant_09,no bcg,gd,602
+infant_10,no bcg,gd,131
+infant_11,no bcg,gd,464
+infant_12,no bcg,gd,399
+infant_13,no bcg,gd,369
+infant_14,no bcg,gd,528
+infant_15,no bcg,gd,291
+infant_16,no bcg,gd,474
+infant_17,no bcg,gd,784
+infant_18,no bcg,gd,633
+infant_19,no bcg,gd,369
+infant_20,no bcg,gd,725
+infant_21,no bcg,gd,412
+infant_22,no bcg,gd,373
+infant_23,no bcg,gd,679
+infant_24,no bcg,gd,405
+infant_25,no bcg,gd,1163
+infant_26,bcg,gd,250
+infant_27,bcg,gd,369
+infant_28,bcg,gd,194
+infant_29,bcg,gd,222
+infant_30,bcg,gd,297
+infant_31,bcg,gd,126
+infant_32,bcg,gd,177
+infant_33,bcg,gd,593
+infant_34,bcg,gd,1487
+infant_35,bcg,gd,242
+infant_36,bcg,gd,301
+infant_37,bcg,gd,339
+infant_38,bcg,gd,362
+infant_39,bcg,gd,275
+infant_40,bcg,gd,525
+infant_41,bcg,gd,504
+infant_42,bcg,gd,931
+infant_43,bcg,gd,460
+infant_44,bcg,gd,518
+infant_45,bcg,gd,465
+infant_46,bcg,gd,443
+infant_47,bcg,gd,868
+infant_48,bcg,gd,1702
+infant_49,bcg,gd,483
+infant_50,bcg,gd,455
