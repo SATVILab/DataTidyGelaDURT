@@ -19,7 +19,7 @@ access.
 
 Note that the package has been updated since the paper was published,
 and the version at the time of publication is available [as a GitHub
-release]()
+release](https://github.com/SATVILab/DataTidyGelaDURT/releases/tag/v1.0.0).
 
 ## Installation
 
