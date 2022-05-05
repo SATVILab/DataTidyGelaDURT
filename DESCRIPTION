@@ -6,7 +6,7 @@ Author: Miguel J Rodo
 Maintainer: Miguel J Rodo <rdxmig002@myuct.ac.za>
 Description: Provide data in rda and csv formats
     that were used to obtain results in 
-    Gela (2021) - Effects of BCG vaccination
+    Gela (2022) - Effects of BCG vaccination
     on donor unrestricted T cells in humans.
 License: CC BY 4.0
 Encoding: UTF-8
@@ -22,6 +22,6 @@ Imports:
     zip
 Depends: 
     R (>= 2.10)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Remotes: 
     MiguelRodo/datautils
