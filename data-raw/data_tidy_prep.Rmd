@@ -299,7 +299,7 @@ data_tidy_freq <- purrr::map_df(sheet_vec, function(sheet) {
 ```
 
 ```{r }
-datautils::view_cols(
+UtilsDataRSV::view_cols(
   data_tidy_freq
 )
 ```
@@ -444,7 +444,7 @@ data_tidy_hladr_infant <- purrr::map_df(sheet_vec, function(sheet) {
 
 
 ```{r }
-datautils::view_cols(
+UtilsDataRSV::view_cols(
   data_tidy_hladr_infant
 )
 ```
@@ -522,7 +522,7 @@ data_tidy_hladr_adult <- purrr::map_df(sheet_vec, function(sheet) {
 ```
 
 ```{r }
-datautils::view_cols(
+UtilsDataRSV::view_cols(
   data_tidy_hladr_adult
 )
 ```
@@ -621,7 +621,7 @@ data_tidy_freq_ifng <- purrr::map_df(sheet_vec, function(sheet) {
 ```
 
 ```{r }
-datautils::view_cols(
+UtilsDataRSV::view_cols(
   data_tidy_freq_ifng
 )
 ```
@@ -759,7 +759,7 @@ data_tidy_mem <- data_tidy_mem %>%
 ```
 
 ```{r }
-datautils::view_cols(
+UtilsDataRSV::view_cols(
   data_tidy_mem
 )
 ```
@@ -878,7 +878,7 @@ testthat::expect_identical(unique(data_tidy_clin_infant$bcg),
 #### View
 
 ```{r }
-datautils::view_cols(
+UtilsDataRSV::view_cols(
   data_tidy_clin_infant
 )
 ```
@@ -1112,7 +1112,7 @@ data_tidy_clin_infant <- data_tidy_clin_infant %>%
 ##### View
 
 ```{r }
-datautils::view_cols(
+UtilsDataRSV::view_cols(
   data_tidy_clin_infant
 )
 ```
@@ -1449,7 +1449,7 @@ data_tidy_clin_adult <- data_tidy_clin_adult %>%
 #### View
 
 ```{r }
-datautils::view_cols(
+UtilsDataRSV::view_cols(
   data_tidy_clin_adult
 )
 ```
