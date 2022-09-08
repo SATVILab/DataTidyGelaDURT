@@ -1,7 +1,7 @@
 Package: DataTidyGelaDURT
 Type: Package
 Title: Process and package data for Gela (2021) 
-Version: 1.1.0
+Version: 1.2.0
 Author: Miguel J Rodo
 Maintainer: Miguel J Rodo <rdxmig002@myuct.ac.za>
 Description: Provide data in rda and csv formats
